@@ -1,72 +1,79 @@
-from fastapi import FastAPI
+from datetime import datetime
+from typing import Dict, Any
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from src.ai_engine.schemas import DocumentAnalysisResponse, TextSegmentAnalysis, BrainActivation
 
-#ai motor funkcioi
-from src.ai_engine.main_engine import (
-    run_full_analysis, 
-    request_simplification, 
-    FullCognitiveReport, 
-    SimplifiedText
-)
-app = FastAPI(title="NeuroRead API")
+# Parserek importálása
+from src.backend.parsers.txt_parser import TXTParser
+from src.backend.parsers.docx_parser import DOCXParser
+from src.backend.parsers.pdf_parser import PDFParser
 
+app = FastAPI(title="NeuroRead API", version="1.0.0")
+
+# CORS Beállítások
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Parser példányok
+txt_parser = TXTParser()
+docx_parser = DOCXParser()
+pdf_parser = PDFParser()
+
 @app.get("/")
 def read_root():
-    return {"message": "NeuroRead Backend API Running"}
+    return {"message": "NeuroRead API fut!"}
 
-# Mock endpoint a frontend független fejlesztéséhez
-@app.get("/api/documents/{doc_id}/result", response_model=DocumentAnalysisResponse)
-def get_mock_document_analysis(doc_id: str):
-    return DocumentAnalysisResponse(
-        document_id=doc_id,
-        overall_difficulty=6.5,
-        total_segments=1,
-        segments=[
-            TextSegmentAnalysis(
-                segment_id=1,
-                text="Ez egy teszt bekezdés a kognitív terhelés elemzéséhez.",
-                difficulty_score=5.0,
-                color_code="#EAB308",
-                factors=["moderate_vocabulary"],
-                simplification_suggestion="Ez egy egyszerűbb mondat.",
-                brain_activation=BrainActivation(
-                    prefrontal_cortex=0.4,
-                    wernicke_area=0.6,
-                    broca_area=0.3,
-                    visual_cortex=0.2
-                )
+@app.post("/api/documents/upload")
+async def upload_document(file: UploadFile = File(...)) -> Dict[str, Any]:
+    try:
+        file_bytes = await file.read()
+        filename = file.filename.lower()
+
+        if filename.endswith(".txt"):
+            parsed_data = txt_parser.parse(file_bytes)
+        elif filename.endswith(".docx"):
+            parsed_data = docx_parser.parse(file_bytes)
+        elif filename.endswith(".pdf"):
+            parsed_data = pdf_parser.parse(file_bytes)
+        else:
+            raise HTTPException(
+                status_code=400, 
+                detail="Nem támogatott fájlformátum. Csak .txt, .docx és .pdf fogadható el."
             )
-        ]
-    )
 
-#AI elemzes es egyszerusites 
+        extracted_text = parsed_data.get("text", "")
+        metadata = parsed_data.get("metadata", {})
 
-class AnalysisRequest(BaseModel):
-    text: str = Field(..., description="Az elemzendő nyers szöveg")
-    language: str = Field(default="hu", description="A nyelv kódja: 'hu', 'ro', vagy 'en'")
+        # Aktuális időpontok generálása
+        now = datetime.now()
+        formatted_time = now.strftime("%H:%M")
+        formatted_datetime = now.strftime("%Y-%m-%d %H:%M")
+        iso_time = now.isoformat()
 
-#SpaCy elemzes
-@app.post("/api/analyze", response_model=FullCognitiveReport)
-def analyze_text(request: AnalysisRequest):
-    try:
-        return run_full_analysis(request.text, request.language)
+        return {
+            "status": "success",
+            "filename": file.filename,
+            "name": file.filename,
+            "text": extracted_text,
+            "content": extracted_text,
+            "size": len(file_bytes),
+            "type": metadata.get("file_type", filename.split(".")[-1]),
+            
+            # Időbélyegek minden lehetséges mezőnévvel
+            "uploaded_at": formatted_time,
+            "upload_time": formatted_datetime,
+            "created_at": iso_time,
+            "timestamp": iso_time,
+            
+            "data": parsed_data,
+            "metadata": metadata
+        }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-#egyszerusites gombnyomasra
-@app.post("/api/simplify", response_model=SimplifiedText)
-def simplify_text(request: AnalysisRequest):
-    try:
-        return request_simplification(request.text, request.language)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Hiba a fájl feldolgozása során: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Fájlfeldolgozási hiba: {str(e)}")

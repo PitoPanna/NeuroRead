@@ -7,8 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.backend.database.connection import Base
 
 if TYPE_CHECKING:
-    from src.backend.database.document import Document
-    from src.backend.database.text_segment import TextSegment
+    from src.backend.database.models.document import Document
+    from src.backend.database.models.text_segment import TextSegment
 
 class AnalysisSession(Base):
     __tablename__ = "analysis_session"

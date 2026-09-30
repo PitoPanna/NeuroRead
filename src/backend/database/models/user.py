@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.backend.database.connection import Base
 
 if TYPE_CHECKING:
-    from src.backend.database.document import Document
+    from src.backend.database.models.document import Document
 
 class User(Base):
     __tablename__ = "users"
@@ -19,4 +19,4 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-    documents = Mapped[List["Document"]] = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
+    documents: Mapped[List["Document"]] = relationship("Document", back_populates="owner", cascade="all, delete-orphan")

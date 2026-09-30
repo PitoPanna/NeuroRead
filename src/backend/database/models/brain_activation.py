@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.backend.database.connection import Base
 
 if TYPE_CHECKING:
-    from src.backend.database.text_segment import TextSegment
+    from src.backend.database.models.text_segment import TextSegment
 
 class BrainActivation(Base):
     __tablename__ = "brain_activations"

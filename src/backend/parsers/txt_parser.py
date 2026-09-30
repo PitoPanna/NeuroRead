@@ -11,12 +11,12 @@ class TXTParser(BaseParser):
             except Exception as e:
                 raise ValueError(f"Unsupported text encoding: {str(e)}")
 
-            cleaned_text = self.clean_text(text)
+        cleaned_text = self.clean_text(text)
 
-            return {
-                "text": cleaned_text,
-                "metadata": {
-                    "character_count": len(cleaned_text),
-                    "file_type": "txt"
-                }
-            } 
+        return {
+            "text": cleaned_text,
+            "metadata": {
+                "character_count": len(cleaned_text),
+                "file_type": "txt"
+            }
+        } 
