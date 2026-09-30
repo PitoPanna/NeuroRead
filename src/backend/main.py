@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 from src.ai_engine.schemas import DocumentAnalysisResponse, TextSegmentAnalysis, BrainActivation
 
+#ai motor funkcioi
+from src.ai_engine.main_engine import (
+    run_full_analysis, 
+    request_simplification, 
+    FullCognitiveReport, 
+    SimplifiedText
+)
 app = FastAPI(title="NeuroRead API")
 
 app.add_middleware(
@@ -40,3 +48,25 @@ def get_mock_document_analysis(doc_id: str):
             )
         ]
     )
+
+#AI elemzes es egyszerusites 
+
+class AnalysisRequest(BaseModel):
+    text: str = Field(..., description="Az elemzendő nyers szöveg")
+    language: str = Field(default="hu", description="A nyelv kódja: 'hu', 'ro', vagy 'en'")
+
+#SpaCy elemzes
+@app.post("/api/analyze", response_model=FullCognitiveReport)
+def analyze_text(request: AnalysisRequest):
+    try:
+        return run_full_analysis(request.text, request.language)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+#egyszerusites gombnyomasra
+@app.post("/api/simplify", response_model=SimplifiedText)
+def simplify_text(request: AnalysisRequest):
+    try:
+        return request_simplification(request.text, request.language)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
