@@ -8,8 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.backend.database.connection import Base
 
 if TYPE_CHECKING:
-    from src.backend.database.analysis_session import AnalysisSession
-    from src.backend.database.brain_activation import BrainActivation
+    from src.backend.database.models.analysis_session import AnalysisSession
+    from src.backend.database.models.brain_activation import BrainActivation
 
 class TextSegment(Base):
     __tablename__ = "text_segments"
@@ -23,7 +23,9 @@ class TextSegment(Base):
     factors: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
     simplification_suggestion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (CheckConstraint('difficulty_score >= 0.0 AND difficulty_score <= 10.0', name='check_difficulty_range'))
+    __table_args__ = (
+        CheckConstraint('difficulty_score >= 0.0 AND difficulty_score <= 10.0', name='check_difficulty_range'),
+        )
 
     session: Mapped["AnalysisSession"] = relationship("AnalysesSession", back_populates="segments")
     brain_activation: Mapped[Optional["BrainActivation"]] = relationship("BrainActivation", back_populates="segment", cascade="all, delete-orphan")

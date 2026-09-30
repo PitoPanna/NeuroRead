@@ -1,122 +1,66 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import { FileUpload } from './components/FileUpload';
+import { DocumentViewer } from './components/DocumentViewer';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [analysisData, setAnalysisData] = useState(null);
+  const [showSimplified, setShowSimplified] = useState(false);
+
+  const handleClear = () => {
+    setAnalysisData(null);
+    setShowSimplified(false);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+    <div className="min-h-screen bg-gray-950 text-gray-100 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Fejléc */}
+        <header className="text-center space-y-3 mb-8">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight sm:leading-snug max-w-4xl mx-auto">
+            NeuroRead
+          </h1>
+          <p className="text-sm sm:text-base text-gray-400">
+            Cognitive Text Intelligence &amp; Brain Visualization Platform
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </header>
 
-      <div className="ticks"></div>
+        {/* Fő tartalom */}
+        <main className="bg-gray-900/60 backdrop-blur-md border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-8">
+          
+          {/* 1. Feltöltő doboz */}
+          <FileUpload onUploadSuccess={(data) => setAnalysisData(data)} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
+          {/* 2. Beolvasott dokumentum és opciók */}
+          {analysisData && (
+            <div className="space-y-4 pt-4 border-t border-gray-800">
+              {/* Fejléc sáv jobb oldalra igazított Törlés gombbal */}
+              <div className="flex justify-between items-center w-full">
+                <h2 className="text-lg font-semibold text-gray-300">
+                  Beolvasott dokumentum
+                </h2>
+                
+                {/* Nagyobb, élénkpiros, jobb oldali Törlés gomb */}
+                <button
+                  onClick={handleClear}
+                  className="px-6 py-2.5 text-base font-semibold text-white bg-red-600 hover:bg-red-500 active:scale-95 rounded-lg transition-all shadow-lg hover:shadow-red-600/30 cursor-pointer ml-auto"
                 >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                  Törlés
+                </button>
+              </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+              {/* Dokumentum és az oldalsó Egyszerűsített Nézet */}
+              <DocumentViewer 
+                initialData={analysisData} 
+                showSimplified={showSimplified}
+                onToggleSimplified={() => setShowSimplified(!showSimplified)}
+              />
+            </div>
+          )}
+
+        </main>
+
+      </div>
+    </div>
+  );
 }
-
-export default App
