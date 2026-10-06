@@ -1,4 +1,5 @@
 import React from 'react';
+import TextHighlighter from './TextHighlighter';
 
 export function DocumentViewer({ initialData, showSimplified, onToggleSimplified }) {
   if (!initialData) return null;
@@ -70,23 +71,14 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
             textAlign: 'left'
           }}
         >
-          <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', borderBottom: '1px solid #1F2937', paddingBottom: '8px' }}>
-            Eredeti Szöveg
+          <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '12px' }}>
+            Eredeti Szöveg (Kognitív kifestéssel)
           </h3>
-          <pre 
-            style={{
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              fontFamily: 'inherit',
-              color: '#E5E7EB',
-              fontSize: '0.95rem',
-              lineHeight: '1.6',
-              margin: 0,
-              textAlign: 'left'
-            }}
-          >
-            {initialData.content}
-          </pre>
+
+          <TextHighlighter
+            originalText={initialData.content || initialData.text || ''}
+            highlights={initialData.cognitive_model?.highlights || []}
+          />  
         </div>
 
         {/* Jobb oldali ablak: Egyszerűsített Szöveg (csak ha be van kapcsolva) */}

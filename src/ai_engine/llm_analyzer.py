@@ -2,6 +2,20 @@ from pydantic import BaseModel, Field
 import instructor
 from openai import OpenAI
 
+class HighlightedSegment(BaseModel):
+    text: str = Field(
+        description="A kiemelendő szó, kifejezés vagy tagmondat pontos szövege az eredeti szövegből."
+    )
+    color_code: str = Field(
+        description="HEX színkód: '#F97316' (narancs: munkamemóriát terhelő kifejezés) vagy '#EF4444' (piros: összetett mondatszerkezet/elakadási pont)."
+    )
+    highlight_type: str = Field(
+        default="llm_cognitive",
+        description="A kiemelés típusa, értéke: 'llm_cognitive'."
+    )
+    reason: str = Field(
+        description="Rövid kognitív indoklás (pl. 'Magas munkamemória-terhelés', 'Összetett syntaxis')."
+    )
 class CognitiveModeling(BaseModel):
     semantic_complexity_score: int = Field(
         description="A szöveg fogalmi nehézsége 1-től 10-ig."
@@ -25,7 +39,7 @@ class SimplifiedText(BaseModel):
     )
 
 
-# 2. Instructor Kliens Beállítása
+# instructor Kliens Beállítása
 
 client = instructor.from_openai(
     OpenAI(
