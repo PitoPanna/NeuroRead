@@ -4,7 +4,8 @@ from src.ai_engine.llm_analyzer import (
     model_cognitive_process, 
     simplify_text_on_demand, 
     CognitiveModeling, 
-    SimplifiedText
+    SimplifiedText,
+    HighlightedSegment
 )
 spacy_processor = TextProcessor()
 
@@ -16,6 +17,34 @@ class FullCognitiveReport(BaseModel):
     spacy_highlights: list[str]
     cognitive_model: CognitiveModeling
 
+def combine_all_highlights(spacy_words: list[str], llm_highlights: list[HighlightedSegment]) -> list[HighlightedSegment]:
+    """
+    Egyesíti a SpaCy által megjelölt nehéz szavakat (sárga) 
+    és az LLM által azonosított kognitív elemeket (narancs/piros).
+    """
+    final_highlights: list[HighlightedSegment] = []
+    seen_texts = set()
+
+    # LLM - kognitiv nehezseg  (Narancs / Piros)
+    for segment in llm_highlights:
+        if segment.text and segment.text not in seen_texts:
+            final_highlights.append(segment)
+            seen_texts.add(segment.text)
+
+    # SpaCy - nehez szavak (SÁRGA - #EAB308)
+    for word in spacy_words:
+        if word not in seen_texts:
+            final_highlights.append(
+                HighlightedSegment(
+                    text=word,
+                    color_code="#EAB308",
+                    highlight_type="spacy_difficult",
+                    reason="Hosszú vagy összetett szakszó"
+                )
+            )
+            seen_texts.add(word)
+
+    return final_highlights
 
 def run_full_analysis(text: str, language: str = "hu") -> FullCognitiveReport:
 

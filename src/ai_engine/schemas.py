@@ -21,3 +21,20 @@ class DocumentAnalysisResponse(BaseModel):
     overall_difficulty: float
     total_segments: int
     segments: List[TextSegmentAnalysis]
+
+#highlighting
+class HighlightedSegment(BaseModel):
+    text: str = Field(..., description="A kiemelendő szó vagy kifejezés pontos szövege")
+    color_code: str = Field(..., description="HEX színkód: #EAB308 (sárga: nehéz szó), #F97316 (narancs: kognitív terhelés), #EF4444 (piros: összetett mondat)")
+    highlight_type: str = Field(..., description="A kiemelés típusa: 'spacy_difficult' vagy 'llm_cognitive'")
+    reason: str = Field(..., description="A kiemelés rövid indoklása")
+
+class CognitiveModeling(BaseModel):
+    working_memory_load: str = Field(..., description="Munkamemória terhelésének szintje")
+    key_takeaways: List[str] = Field(default=[], description="A szöveg fő gondolatai")
+    highlights: List[HighlightedSegment] = Field(default=[], description="A színesen kiemelendő elemek listája")
+
+class SimplifiedText(BaseModel):
+    original_text: str
+    simplified_version: str
+    key_takeaways: List[str]
