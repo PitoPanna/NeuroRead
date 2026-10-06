@@ -3,12 +3,15 @@ from typing import Dict, Any
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-# Parserek importálása
+from src.backend.routers import auth, documents
 from src.backend.parsers.txt_parser import TXTParser
 from src.backend.parsers.docx_parser import DOCXParser
 from src.backend.parsers.pdf_parser import PDFParser
 
-app = FastAPI(title="NeuroRead API", version="1.0.0")
+app = FastAPI(title="NeuroRead API")
+
+app.include_router(auth.router)
+app.include_router(documents.router)
 
 # CORS Beállítások
 app.add_middleware(
