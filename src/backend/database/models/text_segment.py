@@ -27,5 +27,5 @@ class TextSegment(Base):
         CheckConstraint('difficulty_score >= 0.0 AND difficulty_score <= 10.0', name='check_difficulty_range'),
         )
 
-    session: Mapped["AnalysisSession"] = relationship("AnalysesSession", back_populates="segments")
+    session: Mapped["AnalysisSession"] = relationship("AnalysisSession", back_populates="segments")
     brain_activation: Mapped[Optional["BrainActivation"]] = relationship("BrainActivation", back_populates="segment", cascade="all, delete-orphan")

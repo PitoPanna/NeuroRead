@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, List
 from sqlalchemy import String, Integer, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from websockets import StatusLike
 from src.backend.database.connection import Base
 
 if TYPE_CHECKING:
@@ -25,4 +24,5 @@ class Document(Base):
     upload_date: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     owner: Mapped["User"] = relationship("User", back_populates="documents")
-    analysis_session: Mapped[List["AnalysisSession"]] = relationship("AnalysisSession", back_populates="document", cascade="all, delete-orphan")
+    analysis_sessions: Mapped[List["AnalysisSession"]] = relationship("AnalysisSession", back_populates="document", cascade="all, delete-orphan")
+
