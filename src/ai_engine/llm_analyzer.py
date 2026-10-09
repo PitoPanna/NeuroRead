@@ -1,46 +1,8 @@
-from pydantic import BaseModel, Field
 import instructor
 from openai import OpenAI
+from src.ai_engine.schemas import CognitiveModeling, SimplifiedText
 
-class HighlightedSegment(BaseModel):
-    text: str = Field(
-        description="A kiemelendő szó, kifejezés vagy tagmondat pontos szövege az eredeti szövegből."
-    )
-    color_code: str = Field(
-        description="HEX színkód: '#F97316' (narancs: munkamemóriát terhelő kifejezés) vagy '#EF4444' (piros: összetett mondatszerkezet/elakadási pont)."
-    )
-    highlight_type: str = Field(
-        default="llm_cognitive",
-        description="A kiemelés típusa, értéke: 'llm_cognitive'."
-    )
-    reason: str = Field(
-        description="Rövid kognitív indoklás (pl. 'Magas munkamemória-terhelés', 'Összetett syntaxis')."
-    )
-class CognitiveModeling(BaseModel):
-    semantic_complexity_score: int = Field(
-        description="A szöveg fogalmi nehézsége 1-től 10-ig."
-    )
-    working_memory_load: str = Field(
-        description="A munkamemória várható terhelése (alacsony, közepes, magas) és annak leírása."
-    )
-    cognitive_friction_points: list[str] = Field(
-        description="Az agyi feldolgozás során felmerülő lehetséges elakadások vagy fókuszvesztési pontok."
-    )
-    highlighted_terms: list[str] = Field(
-        description="A kifestendő / kiemelendő nehéz szavak, szakzsargonok listája."
-    )
-
-class SimplifiedText(BaseModel):
-    simplified_version: str = Field(
-        description="A szöveg közérthető, egyszerűsített átfogalmazása PONTOSAN UGYANAZON A NYELVEN, mint az eredeti szöveg."
-    )
-    key_takeaways: list[str] = Field(
-        description="A legfontosabb gondolatok vázlatos felsorolása az eredeti szöveg nyelvén."
-    )
-
-
-# instructor Kliens Beállítása
-
+# instructor client
 client = instructor.from_openai(
     OpenAI(
         base_url="http://localhost:11434/v1",
@@ -49,12 +11,13 @@ client = instructor.from_openai(
     mode=instructor.Mode.JSON,
 )
 
-
-# 3. Modulok
-
-#elküldi az Ollamanak a promttal, megjelöli nehézségi pontokat, és visszakapja a kognitív feldolgozás elemzését
 def model_cognitive_process(text: str, language: str = "hu") -> CognitiveModeling:
- 
+    """
+    Elemzi a szöveget az Ollama/Llama 3 segítségével:
+    - Kiemeli a kognitívan terhelő szavakat és mondatszerkezeteket színkódokkal.
+    - Kiszámítja a 4 fő agyterület terhelését (0.0 - 1.0).
+    - Meghatározza a 3D-s vizualizációhoz szükséges aktív szinaptikus útvonalakat.
+    """
     lang_names = {
         "hu": "magyar (Hungarian)",
         "ro": "román (Romanian)",
@@ -64,26 +27,49 @@ def model_cognitive_process(text: str, language: str = "hu") -> CognitiveModelin
 
     prompt = f"""
     Egy kognitív idegkutató és olvasás-pszichológiai AI asszisztens vagy.
-    Elemzed az alábbi szöveget {target_lang} nyelven, és lemodellezed, milyen kognitív folyamatokat vált ki az olvasó agyában.
-    Azonosítsd a kifestendő (kiemelendő) nehéz szavakat és a munkamemóriát terhelő pontokat.
-    
+    Elemzed az alábbi szöveget {target_lang} nyelven, és lemodellezed, milyen kognitív és szinaptikus folyamatokat vált ki az olvasó agyában.
+
+    FELADATOK:
+    1. Határozd meg a fogalmi nehézséget (1-10) és a munkamemória terhelési szintjét.
+    2. Jelöld meg a kifestendő (kiemelendő) kifejezéseket pontos színkódokkal:
+       - '#F97316' (narancs): munkamemóriát terhelő nehéz kifejezések.
+       - '#EF4444' (piros): összetett mondatszerkezet / kognitív elakadási pontok.
+    3. Számítsd ki az agyterületek terhelési pontszámait 0.0 és 1.0 között:
+       - prefrontal_cortex (munkamemória / logika)
+       - wernicke_area (szókincs / szemantika)
+       - broca_area (nyelvtan / szintaxis)
+       - visual_cortex (képzelet / belső képek)
+    4. Határozd meg az aktív szinaptikus útvonalakat (synapse_routes) a 3D-s agymodellhez az alábbi területek között:
+       'visual_cortex', 'wernicke_area', 'broca_area', 'prefrontal_cortex'.
+
     Elemzendő szöveg:
     "{text}"
     """
-    
-    response = client.chat.completions.create(
-        model="llama3",
-        response_model=CognitiveModeling,
-        messages=[
-            {"role": "system", "content": "Válaszolj szigorúan strukturált JSON formátumban."},
-            {"role": "user", "content": prompt},
-        ],
-    )
-    return response
 
-#egyszerűsíti a szöveget, ha a felhasználó megnyomja az "Egyszerűsítés" gombot
+    try:
+        response = client.chat.completions.create(
+            model="llama3",
+            response_model=CognitiveModeling,
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"Válaszolj szigorúan strukturált JSON formátumban az alábbi nyelven: {target_lang}."
+                },
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response
+    except Exception as e:
+        print(f"Hiba az Ollama kognitív elemzés során: {e}")
+        return CognitiveModeling(
+            working_memory_load="Közepes terhelés",
+            key_takeaways=["Az elemzés során hiba lépett fel."],
+            highlights=[]
+        )
+
+#simplification function
 def simplify_text_on_demand(text: str, language: str = "hu") -> SimplifiedText:
-  
+
     lang_names = {
         "hu": "magyar (Hungarian)",
         "ro": "román (Romanian)",
@@ -93,22 +79,30 @@ def simplify_text_on_demand(text: str, language: str = "hu") -> SimplifiedText:
 
     prompt = f"""
     CRITICAL INSTRUCTION: You MUST respond strictly in {target_lang}. Do NOT translate to English.
-    
+
     Feladat: Fogalmazd át az alábbi szöveget {target_lang} nyelven úgy, hogy az kognitív szempontból a lehető legkönnyebben feldolgozható és közérthető legyen.
-    
+
     Eredeti szöveg:
     "{text}"
     """
-    
-    response = client.chat.completions.create(
-        model="llama3",
-        response_model=SimplifiedText,
-        messages=[
-            {
-                "role": "system", 
-                "content": f"Egy  kognitív szövegegyszerűsítő asszisztens vagy. KIZÁRÓLAG {target_lang} nyelven válaszolhatsz, angol használata SZIGORÚAN TILOS!"
-            },
-            {"role": "user", "content": prompt},
-        ],
-    )
-    return response
+
+    try:
+        response = client.chat.completions.create(
+            model="llama3",
+            response_model=SimplifiedText,
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"Egy kognitív szövegegyszerűsítő asszisztens vagy. KIZÁRÓLAG {target_lang} nyelven válaszolhatsz, angol használata SZIGORÚAN TILOS!"
+                },
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response
+    except Exception as e:
+        print(f"Hiba az Ollama egyszerűsítés során: {e}")
+        return SimplifiedText(
+            original_text=text,
+            simplified_version=text,
+            key_takeaways=[]
+        )
