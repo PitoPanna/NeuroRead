@@ -1,12 +1,13 @@
 import React from 'react';
 import TextHighlighter from './TextHighlighter';
+import Brain3DViewer from './Brain3DViewer';
 
 export function DocumentViewer({ initialData, showSimplified, onToggleSimplified }) {
   if (!initialData) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Dokumentum Fejléc Infók és Funkciógomb */}
+      {/* 1. Dokumentum Fejléc Infók és Funkciógomb */}
       <div 
         style={{
           backgroundColor: 'rgba(31, 41, 55, 0.8)',
@@ -50,7 +51,12 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
         </button>
       </div>
 
-      {/* Szöveges ablakok (1 vagy 2 oszlopos elrendezés) */}
+      {/* 2. Interaktív 3D Szinaptikus Agy Modell (React Three Fiber) */}
+      <Brain3DViewer 
+        synapseRoutes={initialData.cognitive_model?.synapse_routes || []} 
+      />
+
+      {/* 3. Szöveges ablakok (1 vagy 2 oszlopos elrendezés) */}
       <div 
         style={{
           display: 'grid',
@@ -59,7 +65,7 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
           transition: 'all 0.3s ease-in-out'
         }}
       >
-        {/* Bal oldali ablak: Eredeti Szöveg */}
+        {/* Bal oldali ablak: Eredeti Szöveg Kognitív Kifestéssel */}
         <div 
           style={{
             backgroundColor: '#111827',
@@ -109,8 +115,7 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
                 textAlign: 'left'
               }}
             >
-              {/* Ide fog érkezni a backend által feldolgozott/egyszerűsített kognitív szöveg */}
-              {initialData.content}
+              {initialData.simplified_text?.simplified_version || initialData.content}
             </pre>
           </div>
         )}
