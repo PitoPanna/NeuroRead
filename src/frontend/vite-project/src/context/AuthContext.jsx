@@ -33,12 +33,14 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const data = await apiLogin(email, password);
     // A login sikeres volt, le kérjük a user adatait az azonosításhoz
+    localStorage.setItem('token', data.access_token);
     try {
       const userResponse = await axiosClient.get('/auth/me');
       setUser(userResponse.data);
-    } catch {
-      // Ha nincs külön /me végpontod, az alapszintű user adatot is beállíthatjuk
-      setUser({ email });
+    } catch (err) {
+      console.error('Érvénytelen vagy lejárt token:', err);
+      localStorage.removeItem('token'); // Töröljük a lejárt tokent
+      setUser(null);
     }
     return data;
   };

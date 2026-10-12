@@ -1,8 +1,7 @@
 from python_multipart import BaseParser
-
-from backend.parsers.docx_parser import DOCXParser
-from backend.parsers.pdf_parser import PDFParser
-from backend.parsers.txt_parser import TXTParser
+from src.backend.parsers.docx_parser import DOCXParser
+from src.backend.parsers.pdf_parser import PDFParser
+from src.backend.parsers.txt_parser import TXTParser
 
 
 class ParserFactory:

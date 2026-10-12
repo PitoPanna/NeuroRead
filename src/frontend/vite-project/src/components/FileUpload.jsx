@@ -1,41 +1,32 @@
 import React, { useState } from 'react';
+import { axiosClient } from '../api/axiosClient';
 
 export function FileUpload({ onUploadSuccess }) {
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const processFile = async (file) => {
-    if (!file) return;
-
-    setLoading(true);
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      // Küldés a Python FastAPI backendnek
-      const response = await fetch('http://localhost:8000/api/documents/upload', {
-        method: 'POST',
-        body: formData,
+      const res = await axiosClient.post('/documents/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Hiba történt a fájl feldolgozása során.');
-      }
-
-      const data = await response.json();
       if (onUploadSuccess) {
-        onUploadSuccess(data);
+        onUploadSuccess(res.data);
       }
-    } catch (error) {
-      console.error('Feltöltési hiba:', error);
-      alert('Nem sikerült a dokumentum feldolgozása a backend által.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Feltöltési hiba:', err);
+      alert('Hiba történt a fájl feldolgozása során: ' + (err.response?.data?.detail || err.message));
     }
   };
 
   return (
-    <div 
+    <div
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={(e) => {
@@ -59,9 +50,9 @@ export function FileUpload({ onUploadSuccess }) {
     >
       <div style={{ color: '#60A5FA' }}>
         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
       </div>
 
@@ -74,7 +65,7 @@ export function FileUpload({ onUploadSuccess }) {
         </p>
       </div>
 
-      <label 
+      <label
         style={{
           backgroundColor: loading ? '#4B5563' : '#2563EB',
           color: '#FFFFFF',
@@ -88,12 +79,12 @@ export function FileUpload({ onUploadSuccess }) {
         }}
       >
         {loading ? 'Feltöltés...' : 'Fájl kiválasztása'}
-        <input 
-          type="file" 
+        <input
+          type="file"
           disabled={loading}
-          style={{ display: 'none' }} 
+          style={{ display: 'none' }}
           accept=".docx,.pdf,.txt"
-          onChange={(e) => processFile(e.target.files[0])} 
+          onChange={(e) => processFile(e.target.files[0])}
         />
       </label>
     </div>
