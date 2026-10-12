@@ -87,6 +87,12 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
           />  
         </div>
 
+        <pre style={{ color: 'yellow', whiteSpace: 'pre-wrap' }}>
+  {JSON.stringify(Object.keys(initialData))}
+  {'\n\n'}
+  {(initialData.content || initialData.text || 'NINCS SZÖVEG').slice(0, 300)}
+</pre>
+
         {/* Jobb oldali ablak: Egyszerűsített Szöveg (csak ha be van kapcsolva) */}
         {showSimplified && (
           <div 

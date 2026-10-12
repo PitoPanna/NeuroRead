@@ -1,7 +1,7 @@
 import io
 import pdfplumber
-from python_multipart import BaseParser
 from typing import Dict, Any
+from src.backend.parsers.base import BaseParser
 
 class PDFParser(BaseParser):
     def parse(self, file_bytes: bytes) -> Dict[str, Any]:
