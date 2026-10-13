@@ -24,7 +24,7 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
       >
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#F3F4F6', margin: '0 0 4px 0' }}>
-            📄 {initialData.name}
+            📄 {initialData.name || initialData.filename}
           </h2>
           <p style={{ fontSize: '0.875rem', color: '#9CA3AF', margin: 0 }}>
             Méret: {initialData.size} | Típus: {initialData.type} | Feltöltve: {initialData.uploadedAt}
@@ -51,9 +51,9 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
         </button>
       </div>
 
-      {/* 2. Interaktív 3D Szinaptikus Agy Modell (React Three Fiber) */}
+      {/* 2. Interaktív 3D Szinaptikus Agy Modell */}
       <Brain3DViewer 
-        synapseRoutes={initialData.cognitive_model?.synapse_routes || []} 
+        synapseRoutes={initialData.cognitive_model?.synapse_routes || initialData.synapses || []} 
       />
 
       {/* 3. Szöveges ablakok (1 vagy 2 oszlopos elrendezés) */}
@@ -115,7 +115,7 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
                 textAlign: 'left'
               }}
             >
-              {initialData.simplified_text?.simplified_version || initialData.content}
+              {initialData.simplified_text?.simplified_version || initialData.content || 'Nincs elérhető egyszerűsítés.'}
             </pre>
           </div>
         )}

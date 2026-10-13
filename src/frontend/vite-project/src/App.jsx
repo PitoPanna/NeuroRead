@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { DocumentViewer } from './components/DocumentViewer';
-import { AuthModal } from './components/AuthModal'; // Visszaállítva kapcsos zárójelre
+import { AuthModal } from './components/AuthModal';
 import { useAuth } from './context/AuthContext';
+import DocumentSidebar from './components/DocumentSidebar';
+import axiosClient from './api/axiosClient';
 
 export default function App() {
+  const [documents, setDocuments] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
   const [showSimplified, setShowSimplified] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -12,33 +15,72 @@ export default function App() {
 
   const { user, logout, isAuthenticated } = useAuth();
 
+  const fetchDocuments = async () => {
+    if (!isAuthenticated) {
+      setDocuments([]);
+      setAnalysisData(null);
+      return;
+    }
+    try {
+      const response = await axiosClient.get('/documents');
+      setDocuments(response.data);
+      if (response.data.length > 0 && !analysisData) {
+        setAnalysisData(response.data[0]);
+      }
+    } catch (err) {
+      console.error('Hiba a dokumentumok lekérésekor:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [isAuthenticated]);
+
+  const handleUploadSuccess = (newDoc) => {
+    setDocuments((prev) => [newDoc, ...prev]);
+    setAnalysisData(newDoc);
+  };
+
+  const handleSelectDocument = (doc) => {
+    if (!doc) return;
+    setAnalysisData(doc);
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!docId) return;
+
+    try {
+      await axiosClient.delete(`/documents/${docId}`);
+      const updatedDocs = documents.filter((doc) => doc.id !== docId);
+      setDocuments(updatedDocs);
+
+      if (analysisData?.id === docId) {
+        setAnalysisData(updatedDocs[0] || null);
+      }
+    } catch (err) {
+      console.error('Hiba a dokumentum törlésekor:', err);
+    }
+  };
+
   const handleClear = () => {
-    setAnalysisData(null);
+    if (analysisData?.id) {
+      handleDeleteDocument(analysisData.id);
+    } else {
+      setAnalysisData(null);
+    }
     setShowSimplified(false);
   };
 
-  const openLogin = () => {
-    setAuthMode('login');
-    setIsAuthModalOpen(true);
-  };
-
-  const openRegister = () => {
-    setAuthMode('register');
-    setIsAuthModalOpen(true);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div style={{ minHeight: '100vh', backgroundColor: '#030712', color: '#F9FAFB', padding: '40px 24px', fontFamily: 'sans-serif' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
-        {/* Fejléc - Relatív pozicionálással a gombokhoz */}
-        <header style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2.5rem' }}>
-
-          {/* Beljebb húzott gombok (right: '1rem' / right: '16px') */}
-          <div style={{ position: 'absolute', right: '1rem', top: '0.25rem', display: 'flex', gap: '8px', zIndex: 10 }}>
+        {/* Fejléc */}
+        <header style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+          <div style={{ position: 'absolute', right: 0, top: 0, display: 'flex', gap: '8px', zIndex: 10 }}>
             {isAuthenticated ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#111827', padding: '8px 16px', borderRadius: '12px', border: '1px solid #1f2937' }}>
-                <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '600' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#111827', padding: '8px 16px', borderRadius: '12px', border: '1px solid #1F2937' }}>
+                <span style={{ fontSize: '14px', color: '#E5E7EB', fontWeight: '600' }}>
                   {user?.full_name || user?.username || user?.email}
                 </span>
                 <button
@@ -53,15 +95,15 @@ export default function App() {
               <>
                 <button
                   type="button"
-                  onClick={openLogin}
-                  style={{ padding: '8px 16px', fontSize: '14px', backgroundColor: '#111827', color: '#d1d5db', border: '1px solid #374151', borderRadius: '10px', cursor: 'pointer' }}
+                  onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); }}
+                  style={{ padding: '8px 16px', fontSize: '14px', backgroundColor: '#111827', color: '#D1D5DB', border: '1px solid #374151', borderRadius: '10px', cursor: 'pointer' }}
                 >
                   Bejelentkezés
                 </button>
                 <button
                   type="button"
-                  onClick={openRegister}
-                  style={{ padding: '8px 16px', fontSize: '14px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}
+                  onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); }}
+                  style={{ padding: '8px 16px', fontSize: '14px', backgroundColor: '#2563EB', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}
                 >
                   Regisztráció
                 </button>
@@ -69,42 +111,55 @@ export default function App() {
             )}
           </div>
 
-          {/* Cím és alcím */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight sm:leading-snug max-w-4xl mx-auto text-center pt-8 sm:pt-0">
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', margin: '0 0 8px 0', textAlign: 'center' }}>
             NeuroRead
           </h1>
-          <p className="text-sm sm:text-base text-gray-400 text-center">
+          <p style={{ fontSize: '1rem', color: '#9CA3AF', margin: 0, textAlign: 'center' }}>
             Cognitive Text Intelligence &amp; Brain Visualization Platform
           </p>
         </header>
 
-        {/* Fő tartalom */}
-        <main className="bg-gray-900/60 backdrop-blur-md border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-8">
-          <FileUpload onUploadSuccess={(data) => setAnalysisData(data)} />
-
-          {analysisData && (
-            <div className="space-y-4 pt-4 border-t border-gray-800">
-              <div className="flex justify-between items-center w-full">
-                <h2 className="text-lg font-semibold text-gray-300">
-                  Beolvasott dokumentum
-                </h2>
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="px-6 py-2.5 text-base font-semibold text-white bg-red-600 hover:bg-red-500 active:scale-95 rounded-lg transition-all shadow-lg hover:shadow-red-600/30 cursor-pointer ml-auto"
-                >
-                  Törlés
-                </button>
-              </div>
-
-              <DocumentViewer
-                initialData={analysisData}
-                showSimplified={showSimplified}
-                onToggleSimplified={() => setShowSimplified(!showSimplified)}
-              />
-            </div>
+        {/* Fő elrendezés: Balra a dokumentumlista, jobbra a tartalom */}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start' }}>
+          
+          {/* BAL OLDAL */}
+          {isAuthenticated && (
+            <DocumentSidebar
+              documents={documents}
+              selectedDocId={analysisData?.id}
+              onSelectDocument={handleSelectDocument}
+              onDeleteDocument={handleDeleteDocument}
+            />
           )}
-        </main>
+
+          {/* JOBB OLDAL */}
+          <main style={{ flex: 1, width: '100%', backgroundColor: 'rgba(17, 24, 39, 0.6)', border: '1px solid #1F2937', borderRadius: '16px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <FileUpload onUploadSuccess={handleUploadSuccess} />
+
+            {analysisData && (
+              <div style={{ borderTop: '1px solid #1F2937', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#D1D5DB', margin: 0 }}>
+                    Beolvasott dokumentum
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: '600', color: 'white', backgroundColor: '#DC2626', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                  >
+                    Törlés
+                  </button>
+                </div>
+
+                <DocumentViewer
+                  initialData={analysisData}
+                  showSimplified={showSimplified}
+                  onToggleSimplified={() => setShowSimplified(!showSimplified)}
+                />
+              </div>
+            )}
+          </main>
+        </div>
 
       </div>
 
