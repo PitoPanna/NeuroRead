@@ -22,7 +22,6 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # Támogatott kiterjesztések (.epub is hozzáadható, ha a ParserFactory támogatja)
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx", ".epub"}
 
-
 def _read_document_content(file_path_str: str, filename: str) -> str:
     """Segédfüggvény a fájl tartalmának biztonságos beolvasásához a lemezről."""
     file_path = Path(file_path_str)
