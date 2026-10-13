@@ -1,21 +1,16 @@
 import axiosClient from './axiosClient';
 
 export const loginUser = async (email, password) => {
-  // FastAPI OAuth2-höz x-www-form-urlencoded formátum kell
-  const formData = new URLSearchParams();
-  formData.append('username', email);
+  // FastAPI OAuth2PasswordRequestForm FORM-DATA-t vár!
+  const formData = new FormData();
+  formData.append('username', email); // A FastAPI 'username'-nek hívja az emailt is
   formData.append('password', password);
 
   const response = await axiosClient.post('/auth/login', formData, {
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'multipart/form-data', // vagy 'application/x-www-form-urlencoded'
     },
   });
-
-  // ITT VAN A HELYE A SETITEM-NEK:
-  if (response.data.access_token) {
-    localStorage.setItem('access_token', response.data.access_token);
-  }
 
   return response.data;
 };

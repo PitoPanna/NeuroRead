@@ -8,18 +8,18 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Az oldal betöltésekor ellenőrizzük, van-e érvényes tokenünk
+  // 1. Az oldal betöltésekor ellenőrizzük az alapadatokat
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const token = localStorage.getItem('access_token');
       if (token) {
         try {
-          // Meghívjuk az aktuális user adatait lekérő backend végpontot
-          const response = await axiosClient.get('/auth/me'); // Vagy a te backended szerinti /users/me endpoint
+          const response = await axiosClient.get('/auth/me');
           setUser(response.data);
         } catch (error) {
           console.error("Érvénytelen vagy lejárt token:", error);
           apiLogout();
+          localStorage.removeItem('access_token');
           setUser(null);
         }
       }
@@ -31,18 +31,24 @@ export const AuthProvider = ({ children }) => {
 
   // 2. Bejelentkezés
   const login = async (email, password) => {
-    const data = await apiLogin(email, password);
-    // A login sikeres volt, le kérjük a user adatait az azonosításhoz
-    localStorage.setItem('token', data.access_token);
     try {
+      const data = await apiLogin(email, password);
+      
+      // MENTÉS: Mindig 'access_token' néven mentsük el!
+      const token = data.access_token || data.token;
+      localStorage.setItem('access_token', token);
+
+      // Lekérjük a bejelentkezett user adatait
       const userResponse = await axiosClient.get('/auth/me');
       setUser(userResponse.data);
+      
+      return data;
     } catch (err) {
-      console.error('Érvénytelen vagy lejárt token:', err);
-      localStorage.removeItem('token'); // Töröljük a lejárt tokent
+      console.error('Bejelentkezési hiba:', err);
+      localStorage.removeItem('access_token');
       setUser(null);
+      throw err; // Dobjuk tovább a hibát a Login felületnek, hogy ki tudja írni
     }
-    return data;
   };
 
   // 3. Regisztráció
@@ -53,6 +59,7 @@ export const AuthProvider = ({ children }) => {
   // 4. Kijelentkezés
   const logout = () => {
     apiLogout();
+    localStorage.removeItem('access_token');
     setUser(null);
   };
 
@@ -63,7 +70,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Egyedi hook az AuthContext egyszerű használatához a komponensekben
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

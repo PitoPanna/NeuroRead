@@ -11,3 +11,4 @@ python-jose
 cryptography
 python-dotenv
 psycopg[binary]
+argon2-cffi
