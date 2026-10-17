@@ -12,3 +12,4 @@ cryptography
 python-dotenv
 psycopg[binary]
 argon2-cffi
+email-validator

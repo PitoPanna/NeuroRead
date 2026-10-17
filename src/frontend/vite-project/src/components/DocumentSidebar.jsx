@@ -100,7 +100,7 @@ export default function DocumentSidebar({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (doc.id) onDeleteDocument(doc.id);
+                      if (doc?.id) onDeleteDocument(doc.id);
                     }}
                     style={{
                       background: 'none',
