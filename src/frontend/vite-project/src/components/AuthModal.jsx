@@ -44,79 +44,94 @@ export function AuthModal({ mode, setMode, onClose }) {
   };
 
   return (
-    /* Sötétített háttér (Overlay) */
     <div
       onClick={onClose}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
+        inset: 0,
+        backgroundColor: 'rgba(2, 6, 23, 0.8)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '16px'
+        padding: '20px'
       }}
     >
-      {/* Modal Kártya */}
       <div
-        onClick={(e) => e.stopPropagation()} // Ne csukódjon be, ha a kártyára kattintunk
+        onClick={(e) => e.stopPropagation()}
+        className="neuro-card"
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '420px',
-          backgroundColor: '#111827',
-          border: '1px solid #1f2937',
-          borderRadius: '16px',
-          padding: '28px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          color: '#f3f4f6'
+          maxWidth: '440px',
+          padding: '36px 32px',
+          background: 'radial-gradient(circle at top, rgba(30, 41, 59, 0.9) 0%, rgba(10, 15, 30, 0.95) 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.15)'
         }}
       >
-        {/* Bezáró X gomb */}
+        {/* Bezárás gomb */}
         <button
           type="button"
           onClick={onClose}
           style={{
             position: 'absolute',
-            top: '16px',
-            right: '16px',
+            top: '20px',
+            right: '20px',
             background: 'none',
             border: 'none',
-            color: '#9ca3af',
+            color: '#64748b',
             fontSize: '18px',
             cursor: 'pointer',
-            padding: '4px 8px',
-            borderRadius: '6px'
+            padding: '6px',
+            borderRadius: '8px',
+            transition: 'color 0.2s'
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#f8fafc')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#64748b')}
         >
           ✕
         </button>
 
-        {/* Cím és fejléc */}
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#ffffff', marginBottom: '6px' }}>
-            {mode === 'login' ? 'Üdv újra!' : 'Fiók létrehozása'}
+        {/* Brand Ikon és Fejléc */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div
+            style={{
+              width: '52px',
+              height: '52px',
+              margin: '0 auto 14px auto',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.3))',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.2)'
+            }}
+          >
+            🧠
+          </div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#ffffff', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
+            {mode === 'login' ? 'Bejelentkezés' : 'Fiók létrehozása'}
           </h2>
-          <p style={{ fontSize: '13px', color: '#9ca3af', margin: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: '#94a3b8', margin: 0 }}>
             {mode === 'login'
-              ? 'Jelentkezz be a mentett dokumentumaid eléréséhez'
-              : 'Regisztrálj a NeuroRead platform használatához'}
+              ? 'Lépj be a kognitív elemzéseid megtekintéséhez'
+              : 'Csatlakozz a NeuroRead kutatói platformhoz'}
           </p>
         </div>
 
-        {/* Hibaüzenet doboz */}
+        {/* Hibaüzenet */}
         {error && (
           <div
             style={{
-              marginBottom: '16px',
+              marginBottom: '18px',
               padding: '10px 14px',
-              backgroundColor: 'rgba(127, 29, 29, 0.4)',
-              border: '1px solid #b91c1c',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
               borderRadius: '10px',
               color: '#fca5a5',
               fontSize: '13px',
@@ -128,55 +143,55 @@ export function AuthModal({ mode, setMode, onClose }) {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {mode === 'register' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '500', color: '#d1d5db' }}>Teljes név</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Teljes név</label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Neved"
+                placeholder="Pl. Kovács Péter"
                 style={{
                   width: '100%',
-                  padding: '10px 14px',
-                  backgroundColor: '#030712',
-                  border: '1px solid #1f2937',
+                  padding: '12px 14px',
+                  backgroundColor: 'rgba(10, 15, 30, 0.7)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
                   borderRadius: '10px',
                   color: '#ffffff',
                   fontSize: '14px',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  fontFamily: 'inherit'
                 }}
               />
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', fontWeight: '500', color: '#d1d5db' }}>Email cím</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Email cím</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nev@example.com"
+              placeholder="pelda@domain.com"
               style={{
                 width: '100%',
-                padding: '10px 14px',
-                backgroundColor: '#030712',
-                border: '1px solid #1f2937',
+                padding: '12px 14px',
+                backgroundColor: 'rgba(10, 15, 30, 0.7)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '10px',
                 color: '#ffffff',
                 fontSize: '14px',
                 outline: 'none',
-                boxSizing: 'border-box'
+                fontFamily: 'inherit'
               }}
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', fontWeight: '500', color: '#d1d5db' }}>Jelszó</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: '#cbd5e1' }}>Jelszó</label>
             <input
               type="password"
               required
@@ -186,14 +201,14 @@ export function AuthModal({ mode, setMode, onClose }) {
               placeholder="••••••••"
               style={{
                 width: '100%',
-                padding: '10px 14px',
-                backgroundColor: '#030712',
-                border: '1px solid #1f2937',
+                padding: '12px 14px',
+                backgroundColor: 'rgba(10, 15, 30, 0.7)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '10px',
                 color: '#ffffff',
                 fontSize: '14px',
                 outline: 'none',
-                boxSizing: 'border-box'
+                fontFamily: 'inherit'
               }}
             />
           </div>
@@ -201,36 +216,41 @@ export function AuthModal({ mode, setMode, onClose }) {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              marginTop: '8px',
-              padding: '12px',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
-              fontWeight: '600',
-              fontSize: '14px',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1,
-              transition: 'background-color 0.2s'
-            }}
+            className="neuro-button-primary"
+            style={{ width: '100%', padding: '13px', marginTop: '6px' }}
           >
-            {loading
-              ? 'Feldolgozás...'
-              : mode === 'login' ? 'Bejelentkezés' : 'Regisztráció'}
+            {loading ? 'Feldolgozás...' : mode === 'login' ? 'Bejelentkezés' : 'Regisztráció'}
           </button>
         </form>
 
-        {/* Átváltó gomb */}
-        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #1f2937', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+        {/* Váltó gomb */}
+        <div
+          style={{
+            marginTop: '22px',
+            paddingTop: '16px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            textAlign: 'center',
+            fontSize: '13px',
+            color: '#94a3b8'
+          }}
+        >
           {mode === 'login' ? (
             <span>
               Még nincs fiókod?{' '}
               <button
                 type="button"
-                onClick={() => { setError(''); setMode('register'); }}
-                style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: '500', cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => {
+                  setError('');
+                  setMode('register');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#38bdf8',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
               >
                 Regisztrálj itt
               </button>
@@ -240,8 +260,18 @@ export function AuthModal({ mode, setMode, onClose }) {
               Már van fiókod?{' '}
               <button
                 type="button"
-                onClick={() => { setError(''); setMode('login'); }}
-                style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: '500', cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => {
+                  setError('');
+                  setMode('login');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#38bdf8',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
               >
                 Jelentkezz be
               </button>

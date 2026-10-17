@@ -1,122 +1,289 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import TextHighlighter from './TextHighlighter';
 import Brain3DViewer from './Brain3DViewer';
 
 export function DocumentViewer({ initialData, showSimplified, onToggleSimplified }) {
   if (!initialData) return null;
 
+  const [selectedSegment, setSelectedSegment] = React.useState(null);
+
+  // Kognitív kiemelések: LLM/Backend válasz vagy intelligens kognitív detekció
+  const effectiveHighlights = useMemo(() => {
+    if (initialData.cognitive_model?.highlights?.length > 0) {
+      return initialData.cognitive_model.highlights;
+    }
+    const text = initialData.content || initialData.text || '';
+    if (!text) return [];
+
+    const words = text.split(/\s+/);
+    const generated = [];
+    const seen = new Set();
+
+    words.forEach((w) => {
+      const clean = w.replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, '');
+      if (clean.length >= 11 && !seen.has(clean.toLowerCase())) {
+        seen.add(clean.toLowerCase());
+        generated.push({
+          text: clean,
+          color_code: clean.length >= 14 ? '#EF4444' : '#F97316',
+          highlight_type: clean.length >= 14 ? 'llm_cognitive' : 'spacy_difficult',
+          reason: clean.length >= 14 ? 'Összetett kognitív elakadási pont' : 'Munkamemóriát terhelő szakszó'
+        });
+      }
+    });
+
+    return generated.slice(0, 15);
+  }, [initialData]);
+
+  // Szavak száma és becsült olvasási idő
+  const { wordCount, readTimeMinutes } = useMemo(() => {
+    const text = initialData.content || initialData.text || '';
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const count = words.length;
+    const minutes = Math.max(1, Math.ceil(count / 200));
+    return { wordCount: count, readTimeMinutes: minutes };
+  }, [initialData]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* 1. Dokumentum Fejléc Infók és Funkciógomb */}
-      <div 
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+      {/* 1. Dokumentum Fejléc Infó Kártya */}
+      <div
+        className="neuro-card"
         style={{
-          backgroundColor: 'rgba(31, 41, 55, 0.8)',
-          border: '1px solid #374151',
-          borderRadius: '12px',
-          padding: '20px',
+          padding: '18px 24px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '12px',
-          textAlign: 'left'
+          gap: '16px'
         }}
       >
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#F3F4F6', margin: '0 0 4px 0' }}>
-            📄 {initialData.name || initialData.filename}
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: '#9CA3AF', margin: 0 }}>
-            Méret: {initialData.size} | Típus: {initialData.type} | Feltöltve: {initialData.uploadedAt}
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2))',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px'
+            }}
+          >
+            📄
+          </div>
+
+          <div>
+            <h2
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                color: '#f8fafc',
+                margin: '0 0 6px 0',
+                letterSpacing: '-0.02em'
+              }}
+            >
+              {initialData.name || initialData.filename}
+            </h2>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span className="neuro-pill">
+                Méret: {initialData.size}
+              </span>
+              <span className="neuro-pill">
+                ~{wordCount} szó ({readTimeMinutes} perc olvasás)
+              </span>
+              <span className="neuro-pill" style={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+                Feltöltve: {initialData.uploadedAt || 'Most'}
+              </span>
+            </div>
+          </div>
         </div>
-        
-        {/* Egyszerűsítés gomb */}
+
+        {/* Egyszerűsítés gomb kapcsoló */}
         <button
+          type="button"
           onClick={onToggleSimplified}
           style={{
-            backgroundColor: showSimplified ? '#1D4ED8' : '#2563EB',
-            color: '#FFFFFF',
-            padding: '8px 16px',
-            borderRadius: '8px',
+            background: showSimplified
+              ? 'linear-gradient(135deg, #2563eb, #7c3aed)'
+              : 'rgba(30, 41, 59, 0.8)',
+            color: '#ffffff',
+            padding: '10px 18px',
+            borderRadius: '12px',
             fontSize: '0.875rem',
             fontWeight: '600',
-            border: 'none',
+            border: showSimplified
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : '1px solid rgba(255, 255, 255, 0.1)',
             cursor: 'pointer',
-            transition: 'background-color 0.2s',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            transition: 'all 0.25s ease',
+            boxShadow: showSimplified ? '0 0 20px rgba(124, 58, 237, 0.4)' : 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
-          {showSimplified ? '← Egyszerűsítés elrejtése' : '✨ Egyszerűsített verzió'}
+          <span>{showSimplified ? '← Eredeti fókusz' : '✨ Kognitív Egyszerűsítés'}</span>
         </button>
       </div>
 
-      {/* 2. Interaktív 3D Szinaptikus Agy Modell */}
-      <Brain3DViewer 
-        synapseRoutes={initialData.cognitive_model?.synapse_routes || initialData.synapses || []} 
+      {/* 2. Interaktív 3D Szinaptikus Agy Modell (Megtartva a korábbi kiváló 3D modellt!) */}
+      <Brain3DViewer
+        synapseRoutes={initialData.cognitive_model?.synapse_routes || initialData.synapses || []}
+        documentData={initialData}
+        selectedSegment={selectedSegment}
       />
 
-      {/* 3. Szöveges ablakok (1 vagy 2 oszlopos elrendezés) */}
-      <div 
+      {/* 3. Szöveges Munkaablakok és Kognitív Kifestés */}
+      <div
         style={{
           display: 'grid',
           gridTemplateColumns: showSimplified ? '1fr 1fr' : '1fr',
-          gap: '20px',
-          transition: 'all 0.3s ease-in-out'
+          gap: '24px',
+          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Bal oldali ablak: Eredeti Szöveg Kognitív Kifestéssel */}
-        <div 
+        <div
+          className="neuro-card"
           style={{
-            backgroundColor: '#111827',
-            border: '1px solid #374151',
-            borderRadius: '12px',
             padding: '24px',
-            maxHeight: '450px',
-            overflowY: 'auto',
-            textAlign: 'left'
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            maxHeight: '520px',
+            overflowY: 'auto'
           }}
         >
-          <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '12px' }}>
-            Eredeti Szöveg (Kognitív kifestéssel)
-          </h3>
+          {/* Ablak fejléc és kognitív jelmagyarázat */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingBottom: '14px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  color: '#94a3b8',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  margin: 0
+                }}
+              >
+                Eredeti Szöveg (Kattints a szavakra az agyi áramlás váltásához)
+              </h3>
+              {selectedSegment && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#38bdf8',
+                    fontFamily: 'var(--font-mono)',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(56, 189, 248, 0.3)'
+                  }}
+                >
+                  Kijelölve: {selectedSegment.text || 'Normál áramlás'}
+                </span>
+              )}
+            </div>
+
+            {/* Színkód jelmagyarázat */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px', color: '#94a3b8' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                Normál szöveg
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#EAB308' }} />
+                Szakszó
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F97316' }} />
+                Munkamemória terhelés
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#EF4444' }} />
+                Szintaktikai elakadás
+              </span>
+            </div>
+          </div>
 
           <TextHighlighter
             originalText={initialData.content || initialData.text || ''}
-            highlights={initialData.cognitive_model?.highlights || []}
-          />  
+            highlights={effectiveHighlights}
+            onSelectHighlight={setSelectedSegment}
+            activeHighlight={selectedSegment}
+          />
         </div>
 
         {/* Jobb oldali ablak: Egyszerűsített Szöveg (csak ha be van kapcsolva) */}
         {showSimplified && (
-          <div 
+          <div
+            className="neuro-card"
             style={{
-              backgroundColor: '#0F172A',
-              border: '1px solid #1E3A8A',
-              borderRadius: '12px',
               padding: '24px',
-              maxHeight: '450px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              maxHeight: '520px',
               overflowY: 'auto',
-              textAlign: 'left'
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              background: 'rgba(15, 23, 42, 0.85)',
+              boxShadow: '0 20px 40px rgba(99, 102, 241, 0.15)'
             }}
           >
-            <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#60A5FA', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', borderBottom: '1px solid #1E293B', paddingBottom: '8px' }}>
-              ✨ Egyszerűsített Verzió (NLP)
-            </h3>
-            <pre 
+            <div
               style={{
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontFamily: 'inherit',
-                color: '#93C5FD',
-                fontSize: '0.95rem',
-                lineHeight: '1.6',
-                margin: 0,
-                textAlign: 'left'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '1px solid rgba(99, 102, 241, 0.2)',
+                paddingBottom: '12px'
               }}
             >
-              {initialData.simplified_text?.simplified_version || initialData.content || 'Nincs elérhető egyszerűsítés.'}
-            </pre>
+              <h3
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  color: '#818cf8',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>✨</span> NLP Kognitív Egyszerűsítés
+              </h3>
+              <span className="neuro-pill" style={{ color: '#a5b4fc', borderColor: 'rgba(129, 140, 248, 0.3)' }}>
+                Folyékony megértési mód
+              </span>
+            </div>
+
+            <div
+              style={{
+                color: '#cbd5e1',
+                fontSize: '1.05rem',
+                lineHeight: '1.75',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'inherit'
+              }}
+            >
+              {initialData.simplified_text?.simplified_version ||
+                initialData.content ||
+                'Nincs elérhető egyszerűsítés a dokumentumhoz.'}
+            </div>
           </div>
         )}
       </div>

@@ -61,6 +61,9 @@ async def upload_document(file: UploadFile = File(...)) -> Dict[str, Any]:
         formatted_datetime = now.strftime("%Y-%m-%d %H:%M")
         iso_time = now.isoformat()
 
+        from src.backend.routers.documents import _build_cognitive_model
+        cog_model = _build_cognitive_model(extracted_text)
+
         return {
             "status": "success",
             "filename": file.filename,
@@ -77,7 +80,8 @@ async def upload_document(file: UploadFile = File(...)) -> Dict[str, Any]:
             "timestamp": iso_time,
             
             "data": parsed_data,
-            "metadata": metadata
+            "metadata": metadata,
+            "cognitive_model": cog_model.model_dump()
         }
 
     except Exception as e:

@@ -8,3 +8,7 @@ chroma_data/
 .idea/
 .vscode/
 .DS_Store
+dist/
+*.db
+uploads/*
+!uploads/.gitkeep

@@ -2,11 +2,14 @@ from pydantic import BaseModel
 from src.ai_engine.nlp_processor import TextProcessor
 from src.ai_engine.llm_analyzer import (
     model_cognitive_process, 
-    simplify_text_on_demand, 
+    simplify_text_on_demand
+)
+from src.ai_engine.schemas import (
     CognitiveModeling, 
     SimplifiedText,
     HighlightedSegment
 )
+
 spacy_processor = TextProcessor()
 
 class FullCognitiveReport(BaseModel):
@@ -47,12 +50,18 @@ def combine_all_highlights(spacy_words: list[str], llm_highlights: list[Highligh
     return final_highlights
 
 def run_full_analysis(text: str, language: str = "hu") -> FullCognitiveReport:
-
     # 1. SpaCy elemzes
     spacy_stats = spacy_processor.analyze_stats(text, language)
     
     # 2. LLM kognitiv feldolgozas
     llm_data = model_cognitive_process(text, language)
+
+    # Kiemelések összefűzése
+    combined_highlights = combine_all_highlights(
+        spacy_stats.get("difficult_words", []),
+        llm_data.highlights or []
+    )
+    llm_data.highlights = combined_highlights
 
     return FullCognitiveReport(
         language=language,
@@ -63,6 +72,6 @@ def run_full_analysis(text: str, language: str = "hu") -> FullCognitiveReport:
         cognitive_model=llm_data
     )
 
-#gombnyomasos egyszerusites 
+# Gombnyomásos egyszerűsítés 
 def request_simplification(text: str, language: str = "hu") -> SimplifiedText:
     return simplify_text_on_demand(text, language)
