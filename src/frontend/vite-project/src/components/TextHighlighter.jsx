@@ -1,17 +1,27 @@
 import React from 'react';
 
-export default function TextHighlighter({ originalText, highlights }) {
+export default function TextHighlighter({ originalText, highlights, onSelectHighlight, activeHighlight }) {
   if (!originalText) return null;
 
   if (!highlights || highlights.length === 0) {
     return (
-      <div className="p-5 bg-slate-800 text-slate-100 rounded-xl shadow-lg border border-slate-700 leading-relaxed text-lg">
+      <div
+        onClick={() => onSelectHighlight && onSelectHighlight({ type: 'normal', text: 'Teljes szöveg', difficulty: 2 })}
+        style={{
+          fontSize: '1.08rem',
+          lineHeight: '1.85',
+          color: '#e2e8f0',
+          cursor: 'pointer',
+          whiteSpace: 'pre-wrap'
+        }}
+        title="Kattints a folyékony kognitív áramlás megtekintéséhez"
+      >
         {originalText}
       </div>
     );
   }
 
-  // kiemelendo szavak keresese
+  // Kiemelendő kifejezések rendezése a leghosszabbtól a legrövidebbig
   const sortedHighlights = [...highlights].sort((a, b) => b.text.length - a.text.length);
 
   const escapedTexts = sortedHighlights
@@ -20,7 +30,16 @@ export default function TextHighlighter({ originalText, highlights }) {
 
   if (escapedTexts.length === 0) {
     return (
-      <div className="p-5 bg-slate-800 text-slate-100 rounded-xl shadow-lg border border-slate-700 leading-relaxed text-lg">
+      <div
+        onClick={() => onSelectHighlight && onSelectHighlight({ type: 'normal', text: 'Teljes szöveg', difficulty: 2 })}
+        style={{
+          fontSize: '1.08rem',
+          lineHeight: '1.85',
+          color: '#e2e8f0',
+          cursor: 'pointer',
+          whiteSpace: 'pre-wrap'
+        }}
+      >
         {originalText}
       </div>
     );
@@ -35,24 +54,62 @@ export default function TextHighlighter({ originalText, highlights }) {
   });
 
   return (
-    <div className="p-6 bg-slate-900 text-slate-100 rounded-xl shadow-xl border border-slate-800 leading-loose text-lg font-sans">
+    <div
+      style={{
+        fontSize: '1.08rem',
+        lineHeight: '1.85',
+        color: '#e2e8f0',
+        whiteSpace: 'pre-wrap'
+      }}
+    >
       {parts.map((part, index) => {
         const matchingHighlight = highlightMap.get(part.toLowerCase());
 
         if (matchingHighlight) {
+          const isSelected = activeHighlight?.text?.toLowerCase() === part.toLowerCase();
+          const baseColor = matchingHighlight.color_code || '#f59e0b';
+
           return (
             <mark
               key={index}
-              style={{ backgroundColor: matchingHighlight.color_code }}
-              className="text-slate-950 font-bold px-2 py-0.5 mx-0.5 rounded-md shadow-sm transition-all duration-200 hover:opacity-80 cursor-help inline-block"
-              title={`${matchingHighlight.reason} (${matchingHighlight.highlight_type})`}
+              onClick={() => onSelectHighlight && onSelectHighlight(matchingHighlight)}
+              style={{
+                backgroundColor: `${baseColor}25`,
+                color: '#ffffff',
+                border: `1px solid ${baseColor}`,
+                boxShadow: isSelected
+                  ? `0 0 16px ${baseColor}, inset 0 0 8px ${baseColor}40`
+                  : `0 0 8px ${baseColor}30`,
+                outline: isSelected ? '2px solid #ffffff' : 'none',
+                transform: isSelected ? 'scale(1.04)' : 'none',
+                padding: '2px 8px',
+                margin: '0 3px',
+                borderRadius: '6px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                display: 'inline-block'
+              }}
+              title={`${matchingHighlight.reason || 'Kognitív elakadás'} — Kattints a 3D agy aktiválásához!`}
             >
               {part}
             </mark>
           );
         }
 
-        return <span key={index}>{part}</span>;
+        return (
+          <span
+            key={index}
+            onClick={() => onSelectHighlight && onSelectHighlight({ type: 'easy', text: part, difficulty: 2 })}
+            style={{
+              cursor: 'pointer',
+              transition: 'color 0.15s ease'
+            }}
+            title="Kattints a folyékony olvasási áramlás megtekintéséhez"
+          >
+            {part}
+          </span>
+        );
       })}
     </div>
   );

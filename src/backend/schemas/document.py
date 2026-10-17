@@ -15,8 +15,11 @@ class Highlight(BaseModel):
 class SynapseRoute(BaseModel):
     from_area: BrainArea
     to_area: BrainArea
+    signal_intensity: float = 1.0
 
 class CognitiveModel(BaseModel):
+    semantic_complexity_score: int = 5
+    working_memory_load: str = "Normál terhelés"
     highlights: List[Highlight] = []
     synapse_routes: List[SynapseRoute] = []
 
