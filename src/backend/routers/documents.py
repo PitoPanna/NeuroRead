@@ -141,7 +141,7 @@ async def get_user_documents(
 
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document_by_id(
-    document_id: int,
+    document_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -167,7 +167,7 @@ async def get_document_by_id(
 
 @router.post("/{document_id}/analyze")
 async def analyze_document(
-    document_id: int,
+    document_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -203,11 +203,14 @@ async def analyze_document(
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
-    document_id: int,
+    document_id: str,  
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    doc = db.query(Document).filter(Document.id == document_id, Document.user_id == current_user.id).first()
+    doc = db.query(Document).filter(
+        Document.id == document_id, 
+        Document.user_id == current_user.id
+    ).first()
     
     if not doc:
         raise HTTPException(
