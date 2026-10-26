@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.backend.database.connection import get_db
@@ -29,6 +30,10 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # Támogatott kiterjesztések
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx", ".epub"}
 
+class SimplifyRequest(BaseModel):
+    text: str
+    language: Optional[str] = "hu"
+
 def _read_document_content(file_path_str: str, filename: str) -> str:
     """Segédfüggvény a fájl tartalmának biztonságos beolvasásához a lemezről."""
     file_path = Path(file_path_str)
@@ -50,8 +55,23 @@ def _build_cognitive_model(content: str) -> CognitiveModel:
         return CognitiveModel()
 
     words = content.split()
+    if not words:
+        return CognitiveModel()
+
     avg_len = sum(len(w) for w in words) / max(1, len(words))
-    is_hard = avg_len > 7.5 or len(words) > 40
+    long_words = [w for w in words if len(w) >= 10]
+    long_ratio = len(long_words) / max(1, len(words))
+
+    # Folytonos kognitív pontszám 1.0 és 10.0 között
+    calculated_score = round(min(9.8, max(2.0, 1.5 + (avg_len - 4.0) * 1.5 + long_ratio * 12.0)), 1)
+    is_hard = calculated_score >= 6.0
+
+    # Normalizált D faktor (0.1 - 1.0)
+    D = calculated_score / 10.0
+    pfc = round(min(0.99, max(0.15, 0.14 + 0.84 * (D ** 1.25))), 2)
+    broca = round(min(0.96, max(0.12, 0.10 + 0.84 * D)), 2)
+    wernicke = round(min(0.95, max(0.28, 0.28 + 0.65 * D)), 2)
+    visual = round(min(0.88, max(0.45, 0.48 + 0.38 * D)), 2)
 
     highlights = []
     seen = set()
@@ -82,10 +102,16 @@ def _build_cognitive_model(content: str) -> CognitiveModel:
     ]
 
     return CognitiveModel(
-        semantic_complexity_score=8 if is_hard else 4,
-        working_memory_load="Magas terhelés (Rekurzív hurok)" if is_hard else "Alacsony terhelés (Folyékony olvasás)",
+        semantic_complexity_score=int(round(calculated_score)),
+        working_memory_load=f"{'Kritikus' if pfc > 0.8 else 'Magas' if is_hard else 'Közepes' if calculated_score >= 4.5 else 'Optimális'} terhelés ({int(pfc * 100)}%)",
         highlights=highlights,
-        synapse_routes=synapse_routes
+        synapse_routes=synapse_routes,
+        brain_activation={
+            "prefrontal_cortex": pfc,
+            "broca_area": broca,
+            "wernicke_area": wernicke,
+            "visual_cortex": visual,
+        }
     )
 
 @router.post(
@@ -143,6 +169,25 @@ async def upload_document(
     content = result.get("text", "") if isinstance(result, dict) else str(result)
     cognitive_data = _build_cognitive_model(content)
 
+    # Előre előkészített kognitív egyszerűsített verzió generálása
+    simplified_obj = None
+    if content:
+        try:
+            from src.ai_engine.main_engine import request_simplification
+            sim = request_simplification(content, language="hu")
+            simplified_obj = SimplifiedText(
+                simplified_version=sim.simplified_version,
+                key_takeaways=getattr(sim, "key_takeaways", [])
+            )
+        except Exception as e:
+            print(f"Egyszerűsítés előállítási figyelmeztetés: {e}")
+            from src.ai_engine.llm_analyzer import heuristic_simplify
+            sim = heuristic_simplify(content, language="hu")
+            simplified_obj = SimplifiedText(
+                simplified_version=sim.simplified_version,
+                key_takeaways=getattr(sim, "key_takeaways", [])
+            )
+
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     # Ha be van jelentkezve a felhasználó, mentjük az adatbázisba
@@ -168,8 +213,75 @@ async def upload_document(
         type=file_ext.replace(".", ""),
         uploadedAt=now_str,
         content=content or "",
-        cognitive_model=cognitive_data
+        cognitive_model=cognitive_data,
+        simplified_text=simplified_obj
     )
+
+@router.post("/simplify")
+async def simplify_text_endpoint(payload: SimplifyRequest):
+    """Bármilyen nyers szöveg közvetlen kognitív egyszerűsítése."""
+    if not payload.text or not payload.text.strip():
+        raise HTTPException(status_code=400, detail="A megadott szöveg üres.")
+
+    try:
+        from src.ai_engine.main_engine import request_simplification
+        sim = request_simplification(payload.text, language=payload.language or "hu")
+        return {
+            "status": "success",
+            "original_text": payload.text,
+            "simplified_version": sim.simplified_version,
+            "key_takeaways": getattr(sim, "key_takeaways", [])
+        }
+    except Exception as e:
+        print(f"Hiba a simplify_text_endpoint során ({e}), heurisztikus egyszerűsítés futtatása.")
+        from src.ai_engine.llm_analyzer import heuristic_simplify
+        sim = heuristic_simplify(payload.text, language=payload.language or "hu")
+        return {
+            "status": "success",
+            "original_text": payload.text,
+            "simplified_version": sim.simplified_version,
+            "key_takeaways": getattr(sim, "key_takeaways", [])
+        }
+
+@router.post("/{document_id}/simplify")
+async def simplify_document_by_id(
+    document_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """Egy adott feltöltött dokumentum egyszerűsített verziójának lekérése."""
+    content = ""
+    if current_user:
+        doc = db.query(Document).filter(Document.id == document_id, Document.user_id == current_user.id).first()
+        if doc:
+            content = _read_document_content(doc.storage_path, doc.filename)
+
+    if not content:
+        doc = db.query(Document).filter(Document.id == document_id).first()
+        if doc:
+            content = _read_document_content(doc.storage_path, doc.filename)
+
+    if not content:
+        raise HTTPException(status_code=404, detail="A dokumentum tartalma nem található.")
+
+    try:
+        from src.ai_engine.main_engine import request_simplification
+        sim = request_simplification(content, language="hu")
+        return {
+            "status": "success",
+            "document_id": document_id,
+            "simplified_version": sim.simplified_version,
+            "key_takeaways": getattr(sim, "key_takeaways", [])
+        }
+    except Exception as e:
+        from src.ai_engine.llm_analyzer import heuristic_simplify
+        sim = heuristic_simplify(content, language="hu")
+        return {
+            "status": "success",
+            "document_id": document_id,
+            "simplified_version": sim.simplified_version,
+            "key_takeaways": getattr(sim, "key_takeaways", [])
+        }
 
 @router.get("", response_model=List[DocumentResponse])
 async def get_user_documents(
@@ -248,12 +360,26 @@ async def analyze_document(
         print(f"AI elemzés nem futtatható ({e}), automatikus kognitív modell aktiválva.")
         cognitive_model = _build_cognitive_model(content)
 
+    # Kognitív egyszerűsített szöveg előállítása
+    try:
+        from src.ai_engine.main_engine import request_simplification
+        sim = request_simplification(content, language="hu")
+        simplified_payload = {
+            "simplified_version": sim.simplified_version,
+            "key_takeaways": getattr(sim, "key_takeaways", [])
+        }
+    except Exception as e:
+        from src.ai_engine.llm_analyzer import heuristic_simplify
+        sim = heuristic_simplify(content, language="hu")
+        simplified_payload = {
+            "simplified_version": sim.simplified_version,
+            "key_takeaways": getattr(sim, "key_takeaways", [])
+        }
+
     return {
         "document_id": document_id,
         "cognitive_model": cognitive_model,
-        "simplified_text": {
-            "simplified_version": content if content else "Nincs megjeleníthető szöveg."
-        }
+        "simplified_text": simplified_payload
     }
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict
 from uuid import UUID
 from pydantic import BaseModel
 
@@ -22,9 +22,11 @@ class CognitiveModel(BaseModel):
     working_memory_load: str = "Normál terhelés"
     highlights: List[Highlight] = []
     synapse_routes: List[SynapseRoute] = []
+    brain_activation: Optional[Dict[str, float]] = None
 
 class SimplifiedText(BaseModel):
     simplified_version: str
+    key_takeaways: List[str] = []
 
 class DocumentResponse(BaseModel):
     id: UUID
