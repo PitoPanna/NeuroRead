@@ -342,79 +342,98 @@ export default function Brain3DViewer({
   // Vezérlő mód: 'easy' (Könnyű), 'hard' (Nehéz), vagy 'auto' (Szövegből származtatott)
   const [activeMode, setActiveMode] = useState('auto');
 
-  // Határozzuk meg az aktuális nehézségi szintet
-  const effectiveDifficulty = useMemo(() => {
-    if (activeMode === 'easy') return 'easy';
-    if (activeMode === 'hard') return 'hard';
+  // Folytonos kognitív terhelési pontszám kiszámítása (1.0 - 10.0)
+  const numericCognitiveScore = useMemo(() => {
+    if (activeMode === 'easy') return 2.8;
+    if (activeMode === 'hard') return 8.8;
 
-    // Ha van kijelölt mondat/kiemelés
+    // 1. Kijelölt szó vagy mondatrészlet alapján
     if (selectedSegment) {
+      if (selectedSegment.difficulty_score) return Number(selectedSegment.difficulty_score);
+      if (selectedSegment.difficulty) return Number(selectedSegment.difficulty);
       const color = selectedSegment.color_code || selectedSegment.color || '';
-      if (color.includes('EF4444') || color.includes('F97316') || selectedSegment.difficulty > 6) {
-        return 'hard';
+      const textLen = (selectedSegment.text || '').length;
+      const lenBonus = Math.min(2.0, textLen / 25);
+      if (color.includes('EF4444')) return Math.min(10.0, 8.2 + lenBonus);
+      if (color.includes('F97316')) return Math.min(8.5, 6.4 + lenBonus);
+      if (color.includes('EAB308')) return Math.min(6.5, 4.6 + lenBonus);
+      return Math.min(4.0, 2.2 + lenBonus);
+    }
+
+    // 2. Dokumentum kognitív modelljéből
+    if (documentData?.cognitive_model?.semantic_complexity_score) {
+      return Number(documentData.cognitive_model.semantic_complexity_score);
+    }
+
+    // 3. Szöveg valós nyelvi összetettsége alapján (dinamikus folytonos heurisztika)
+    const text = documentData?.content || documentData?.text || '';
+    if (text) {
+      const words = text.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        const avgWordLen = words.reduce((acc, w) => acc + w.length, 0) / words.length;
+        const longWords = words.filter(w => w.length >= 10).length;
+        const longWordRatio = longWords / words.length;
+        const rawScore = 1.5 + (avgWordLen - 4.2) * 1.5 + longWordRatio * 13.0;
+        return Math.min(9.8, Math.max(1.8, Number(rawScore.toFixed(1))));
       }
-      return 'easy';
     }
 
-    // Ha van dokumentum kognitív modellje
-    if (documentData?.cognitive_model?.semantic_complexity_score > 6) {
-      return 'hard';
-    }
-
-    return initialDifficulty || 'easy';
+    return initialDifficulty === 'hard' ? 8.4 : 3.0;
   }, [activeMode, selectedSegment, documentData, initialDifficulty]);
 
-  const isDifficult = effectiveDifficulty === 'hard';
+  const isDifficult = numericCognitiveScore >= 6.0;
 
-  // Kognitív terhelési pontok az agyterületekre (0.0 - 1.0)
+  // Dinamikus, folytonos kognitív terhelési pontok az agyterületekre (0.0 - 1.0)
   const regionLoads = useMemo(() => {
-    if (isDifficult) {
-      // Nehéz szöveg: Munkamemória (Prefrontális) és Szintaxis (Broca) túlterhelődik!
+    // Ha van közvetlen agyterületi aktiváció a backendtől
+    const backendActivation = documentData?.cognitive_model?.brain_activation;
+    if (backendActivation && activeMode === 'auto' && !selectedSegment) {
       return {
-        visual_cortex: 0.85,
-        wernicke_area: 0.88,
-        broca_area: 0.94,
-        prefrontal_cortex: 0.98
-      };
-    } else {
-      // Könnyű szöveg: Folyékony olvasás, domináns a vizuális és szemantikai feldolgozás
-      return {
-        visual_cortex: 0.7,
-        wernicke_area: 0.45,
-        broca_area: 0.18,
-        prefrontal_cortex: 0.22
+        visual_cortex: Math.min(0.99, Math.max(0.1, Number(backendActivation.visual_cortex || 0.6))),
+        wernicke_area: Math.min(0.99, Math.max(0.1, Number(backendActivation.wernicke_area || 0.5))),
+        broca_area: Math.min(0.99, Math.max(0.1, Number(backendActivation.broca_area || 0.4))),
+        prefrontal_cortex: Math.min(0.99, Math.max(0.1, Number(backendActivation.prefrontal_cortex || 0.5)))
       };
     }
-  }, [isDifficult]);
 
-  // Információáramlási útvonalak a nehézség szerint
+    // Normalizált nehézségi faktor: 0.1 - 1.0
+    const D = Math.min(1.0, Math.max(0.1, numericCognitiveScore / 10.0));
+
+    return {
+      // Prefrontális: Munkamemória, exponenciálisan növekszik (18% - 98%)
+      prefrontal_cortex: Math.min(0.99, Math.max(0.15, 0.14 + 0.84 * Math.pow(D, 1.25))),
+      // Broca: Szintaxis és artikulációs hurok (12% - 94%)
+      broca_area: Math.min(0.96, Math.max(0.12, 0.10 + 0.84 * D)),
+      // Wernicke: Szemantikai értelmezés és lexikon (30% - 92%)
+      wernicke_area: Math.min(0.95, Math.max(0.28, 0.28 + 0.65 * D)),
+      // Látókéreg: Vizuális szimbólumok beolvasása (48% - 86%)
+      visual_cortex: Math.min(0.88, Math.max(0.45, 0.48 + 0.38 * D))
+    };
+  }, [numericCognitiveScore, documentData, activeMode, selectedSegment]);
+
+  // Információáramlási útvonalak a folytonos nehézség szerint
   const routes = useMemo(() => {
+    const D = Math.min(1.0, Math.max(0.1, numericCognitiveScore / 10.0));
+    const speedMultiplier = 0.8 + D * 1.8; // 1.0x - 2.6x közötti folytonos sebesség
+
     if (isDifficult) {
-      // NEHÉZ SZÖVEG ÁRAMLÁS:
-      // 1. Látókéreg -> Wernicke (Dekódolási kísérlet)
-      // 2. Wernicke -> Broca (Nyelvtani újraelemzés)
-      // 3. Broca -> Prefrontális (Munkamemória bevonása)
-      // 4. Prefrontális -> Wernicke (Kognitív elakadás miatti visszacsatolási hurok!)
-      // 5. Prefrontális -> Broca (Belső beszéd újraindítása)
+      // NEHÉZ SZÖVEG ÁRAMLÁS (Pulzáló feedback hurok a megértési elakadás miatt):
       return [
-        { from: 'visual_cortex', to: 'wernicke_area', color: '#f59e0b', speed: 2.2, count: 3, intensity: 1.1 },
-        { from: 'wernicke_area', to: 'broca_area', color: '#f97316', speed: 2.4, count: 3, intensity: 1.2 },
-        { from: 'broca_area', to: 'prefrontal_cortex', color: '#ef4444', speed: 2.6, count: 4, intensity: 1.4 },
-        { from: 'prefrontal_cortex', to: 'wernicke_area', color: '#ec4899', speed: 2.0, count: 3, intensity: 1.0 },
-        { from: 'prefrontal_cortex', to: 'broca_area', color: '#ef4444', speed: 2.2, count: 3, intensity: 1.1 }
+        { from: 'visual_cortex', to: 'wernicke_area', color: D > 0.8 ? '#ef4444' : '#f59e0b', speed: speedMultiplier * 1.1, count: 3, intensity: 1.1 },
+        { from: 'wernicke_area', to: 'broca_area', color: D > 0.8 ? '#ef4444' : '#f97316', speed: speedMultiplier * 1.15, count: 3, intensity: 1.2 },
+        { from: 'broca_area', to: 'prefrontal_cortex', color: '#ef4444', speed: speedMultiplier * 1.25, count: 4, intensity: 1.4 },
+        { from: 'prefrontal_cortex', to: 'wernicke_area', color: '#ec4899', speed: speedMultiplier * 1.0, count: 3, intensity: 1.0 },
+        { from: 'prefrontal_cortex', to: 'broca_area', color: '#ef4444', speed: speedMultiplier * 1.1, count: 3, intensity: 1.1 }
       ];
     } else {
-      // KÖNNYŰ SZÖVEG ÁRAMLÁS:
-      // Folyékony, egyirányú, alacsony ellenállású közvetlen áramlás
-      // 1. Látókéreg -> Wernicke (Automata felismerés)
-      // 2. Wernicke -> Prefrontális (Könnyed megértés, nincs elakadás)
+      // KÖNNYŰ SZÖVEG ÁRAMLÁS (Lamináris, gördülékeny áramlás):
       return [
-        { from: 'visual_cortex', to: 'wernicke_area', color: '#10b981', speed: 1.3, count: 2, intensity: 0.9 },
-        { from: 'wernicke_area', to: 'prefrontal_cortex', color: '#06b6d4', speed: 1.1, count: 2, intensity: 0.8 },
-        { from: 'wernicke_area', to: 'broca_area', color: '#3b82f6', speed: 0.9, count: 1, intensity: 0.6 }
+        { from: 'visual_cortex', to: 'wernicke_area', color: '#10b981', speed: speedMultiplier * 1.0, count: 2, intensity: 0.9 },
+        { from: 'wernicke_area', to: 'prefrontal_cortex', color: '#06b6d4', speed: speedMultiplier * 0.9, count: 2, intensity: 0.8 },
+        { from: 'wernicke_area', to: 'broca_area', color: '#3b82f6', speed: speedMultiplier * 0.75, count: 1, intensity: 0.6 }
       ];
     }
-  }, [isDifficult]);
+  }, [numericCognitiveScore, isDifficult]);
 
   return (
     <div
@@ -574,15 +593,21 @@ export default function Brain3DViewer({
             KOGNITÍV METRIKÁK
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-            <span>Munkamemória:</span>
-            <span style={{ fontWeight: 'bold', color: isDifficult ? '#ef4444' : '#10b981' }}>
-              {isDifficult ? '98% (Kritikus)' : '22% (Optimális)'}
+            <span>Kognitív index:</span>
+            <span style={{ fontWeight: 'bold', color: numericCognitiveScore >= 7.5 ? '#ef4444' : numericCognitiveScore >= 5.5 ? '#f59e0b' : '#34d399' }}>
+              {numericCognitiveScore.toFixed(1)} / 10.0
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-            <span>Áramlási sebesség:</span>
-            <span style={{ fontWeight: 'bold', color: isDifficult ? '#f59e0b' : '#38bdf8' }}>
-              {isDifficult ? 'Gyors / Pulzáló' : 'Nyugodt / Stabil'}
+            <span>Munkamemória:</span>
+            <span style={{ fontWeight: 'bold', color: regionLoads.prefrontal_cortex > 0.75 ? '#ef4444' : regionLoads.prefrontal_cortex > 0.45 ? '#f59e0b' : '#10b981' }}>
+              {Math.round(regionLoads.prefrontal_cortex * 100)}% ({regionLoads.prefrontal_cortex > 0.75 ? 'Kritikus' : regionLoads.prefrontal_cortex > 0.45 ? 'Fokozott' : 'Optimális'})
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span>Agyi frekvencia:</span>
+            <span style={{ fontWeight: 'bold', color: '#38bdf8', fontFamily: 'monospace' }}>
+              {(12 + regionLoads.prefrontal_cortex * 24).toFixed(1)} Hz ({regionLoads.prefrontal_cortex > 0.65 ? 'Gamma' : regionLoads.prefrontal_cortex > 0.4 ? 'Béta' : 'Alfa'})
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>

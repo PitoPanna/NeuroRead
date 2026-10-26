@@ -90,6 +90,13 @@ export function FileUpload({ onUploadSuccess }) {
       // Fallback: ha a backend offline, olvassuk be a böngészőben közvetlenül txt esetén
       if (file.name.endsWith('.txt')) {
         const text = await file.text();
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        const avgWordLen = words.reduce((acc, w) => acc + w.length, 0) / Math.max(1, words.length);
+        const longWords = words.filter(w => w.length >= 10).length;
+        const longRatio = longWords / Math.max(1, words.length);
+        const score = Math.min(9.8, Math.max(2.0, Number((1.5 + (avgWordLen - 4.2) * 1.5 + longRatio * 13.0).toFixed(1))));
+        const D = score / 10.0;
+
         const localDoc = {
           id: 'local-' + Date.now(),
           name: file.name,
@@ -97,7 +104,26 @@ export function FileUpload({ onUploadSuccess }) {
           size: `${(file.size / 1024).toFixed(1)} KB`,
           type: 'txt',
           uploadedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          content: text
+          content: text,
+          cognitive_model: {
+            semantic_complexity_score: Math.round(score),
+            working_memory_load: score >= 7.5 ? 'Kritikus terhelés' : score >= 5.5 ? 'Magas terhelés' : 'Optimális terhelés',
+            brain_activation: {
+              prefrontal_cortex: Math.min(0.99, Math.max(0.15, Number((0.14 + 0.84 * Math.pow(D, 1.25)).toFixed(2)))),
+              broca_area: Math.min(0.96, Math.max(0.12, Number((0.10 + 0.84 * D).toFixed(2)))),
+              wernicke_area: Math.min(0.95, Math.max(0.28, Number((0.28 + 0.65 * D).toFixed(2)))),
+              visual_cortex: Math.min(0.88, Math.max(0.45, Number((0.48 + 0.38 * D).toFixed(2))))
+            },
+            synapse_routes: score >= 6.0 ? [
+              { from_area: 'visual_cortex', to_area: 'wernicke_area' },
+              { from_area: 'wernicke_area', to_area: 'broca_area' },
+              { from_area: 'broca_area', to_area: 'prefrontal_cortex' },
+              { from_area: 'prefrontal_cortex', to_area: 'wernicke_area' }
+            ] : [
+              { from_area: 'visual_cortex', to_area: 'wernicke_area' },
+              { from_area: 'wernicke_area', to_area: 'prefrontal_cortex' }
+            ]
+          }
         };
         if (onUploadSuccess) onUploadSuccess(localDoc);
       } else {

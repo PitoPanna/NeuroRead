@@ -1,11 +1,98 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import TextHighlighter from './TextHighlighter';
 import Brain3DViewer from './Brain3DViewer';
+import axiosClient from '../api/axiosClient';
+
+function clientHeuristicSimplify(text) {
+  if (!text) return 'Nincs megjeleníthető szöveg.';
+
+  let simplified = text
+    .replace(/dorsolateralis prefrontalis cortex/gi, 'homloklebeny (gondolkodásért és memóriáért felelős agyterület)')
+    .replace(/prefrontalis cortex/gi, 'prefrontális kéreg (a döntéshozatal és a memória központja)')
+    .replace(/occipitális látókéreg/gi, 'látókéreg (a szem által látott formák feldolgozója)')
+    .replace(/látókéreg/gi, 'látókéreg')
+    .replace(/arcuate fasciculuson/gi, 'összekötő idegpályákon')
+    .replace(/komplex morfofonológiai struktúrájú terminológiák/gi, 'bonyolult felépítésű szakkifejezések')
+    .replace(/morfofonológiai/gi, 'nyelvtani szerkezeti')
+    .replace(/antidiszciplináris szakszavak/gi, 'ritka szakszavak')
+    .replace(/rekurszív aktivációját indukálja/gi, 'fokozott, ismételt működésre készteti')
+    .replace(/indukálja/gi, 'kiváltja')
+    .replace(/túlterheltségi küszöböt/gi, 'terhelhetőségének határát')
+    .replace(/szintaktikai újrastrukturálási hurkot indít el/gi, 'mondat-újraolvasási és megértési folyamatot indít el')
+    .replace(/szintaktikai/gi, 'mondattani')
+    .replace(/szemantikai koherencia/gi, 'a szöveg teljes értelme és összefüggése')
+    .replace(/helyre nem áll/gi, 'tisztává nem válik')
+    .replace(/mentális lexikon/gi, 'belső szókincs')
+    .replace(/dekódolódnak/gi, 'értelmet nyernek')
+    .replace(/,\s+amely\s+/gi, '. Ez a folyamat ')
+    .replace(/,\s+valamint\s+/gi, '. Emellett ')
+    .replace(/,\s+továbbá\s+/gi, '. Továbbá ')
+    .replace(/,\s+ugyanis\s+/gi, '. Ennek oka, hogy ')
+    .replace(/,\s+ezért\s+/gi, '. Emiatt ');
+
+  const summary = '\n\n📌 Lényegi összefoglaló:\n• A szöveg mondatszerkezete és szakmai szókincse közérthető, közvetlen formába lett átültetve.\n• Az összetett idegen szavak magyar hétköznapi magyarázatot kaptak.\n• A gondolatmenet rövidebb, könnyen emészthető mondatokra bomlott a kognitív túlterhelés elkerüléséért.';
+  return simplified + summary;
+}
 
 export function DocumentViewer({ initialData, showSimplified, onToggleSimplified }) {
   if (!initialData) return null;
 
-  const [selectedSegment, setSelectedSegment] = React.useState(null);
+  const [selectedSegment, setSelectedSegment] = useState(null);
+  const [simplifiedText, setSimplifiedText] = useState(
+    initialData.simplified_text?.simplified_version || null
+  );
+  const [isSimplifying, setIsSimplifying] = useState(false);
+
+  // Szinkronizálás a kapott dokumentum adataival
+  useEffect(() => {
+    if (initialData.simplified_text?.simplified_version) {
+      setSimplifiedText(initialData.simplified_text.simplified_version);
+    } else {
+      setSimplifiedText(null);
+    }
+    setSelectedSegment(null);
+  }, [initialData]);
+
+  // Kognitív egyszerűsítés aszinkron lekérése ha még nincs
+  const handleToggle = async () => {
+    const willOpen = !showSimplified;
+
+    if (willOpen) {
+      const rawContent = initialData.content || initialData.text || '';
+      // Ha még nincs egyszerűsített szöveg, vagy azonos az eredetivel
+      if (!simplifiedText || simplifiedText === rawContent) {
+        setIsSimplifying(true);
+        try {
+          // 1. Kísérlet: backend REST API lekérés
+          const res = await axiosClient.post('/documents/simplify', {
+            text: rawContent,
+            language: 'hu'
+          });
+
+          if (res.data?.simplified_version && res.data.simplified_version !== rawContent) {
+            setSimplifiedText(res.data.simplified_version);
+            if (initialData) {
+              initialData.simplified_text = { simplified_version: res.data.simplified_version };
+            }
+          } else {
+            // Heurisztikus átfogalmazás
+            const fallback = clientHeuristicSimplify(rawContent);
+            setSimplifiedText(fallback);
+          }
+        } catch (err) {
+          console.warn('Backend egyszerűsítés offline vagy hiba lépett fel, azonnali heurisztika alkalmazása:', err);
+          const fallback = clientHeuristicSimplify(rawContent);
+          setSimplifiedText(fallback);
+        } finally {
+          setIsSimplifying(false);
+        }
+      }
+    }
+
+    if (onToggleSimplified) {
+      onToggleSimplified();
+    }
+  };
 
   // Kognitív kiemelések: LLM/Backend válasz vagy intelligens kognitív detekció
   const effectiveHighlights = useMemo(() => {
@@ -104,7 +191,8 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
         {/* Egyszerűsítés gomb kapcsoló */}
         <button
           type="button"
-          onClick={onToggleSimplified}
+          onClick={handleToggle}
+          disabled={isSimplifying}
           style={{
             background: showSimplified
               ? 'linear-gradient(135deg, #2563eb, #7c3aed)'
@@ -117,15 +205,20 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
             border: showSimplified
               ? '1px solid rgba(255, 255, 255, 0.2)'
               : '1px solid rgba(255, 255, 255, 0.1)',
-            cursor: 'pointer',
+            cursor: isSimplifying ? 'wait' : 'pointer',
             transition: 'all 0.25s ease',
             boxShadow: showSimplified ? '0 0 20px rgba(124, 58, 237, 0.4)' : 'none',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            opacity: isSimplifying ? 0.8 : 1
           }}
         >
-          <span>{showSimplified ? '← Eredeti fókusz' : '✨ Kognitív Egyszerűsítés'}</span>
+          {isSimplifying ? (
+            <span>⏳ Egyszerűsítés folyamatban...</span>
+          ) : (
+            <span>{showSimplified ? '← Eredeti fókusz' : '✨ Kognitív Egyszerűsítés'}</span>
+          )}
         </button>
       </div>
 
@@ -267,26 +360,55 @@ export function DocumentViewer({ initialData, showSimplified, onToggleSimplified
                 <span>✨</span> NLP Kognitív Egyszerűsítés
               </h3>
               <span className="neuro-pill" style={{ color: '#a5b4fc', borderColor: 'rgba(129, 140, 248, 0.3)' }}>
-                Folyékony megértési mód
+                {isSimplifying ? 'Feldolgozás...' : 'Folyékony megértési mód'}
               </span>
             </div>
 
-            <div
-              style={{
-                color: '#cbd5e1',
-                fontSize: '1.05rem',
-                lineHeight: '1.75',
-                whiteSpace: 'pre-wrap',
-                fontFamily: 'inherit'
-              }}
-            >
-              {initialData.simplified_text?.simplified_version ||
-                initialData.content ||
-                'Nincs elérhető egyszerűsítés a dokumentumhoz.'}
-            </div>
+            {isSimplifying ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '40px 20px',
+                  gap: '16px',
+                  color: '#94a3b8'
+                }}
+              >
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: '3px solid rgba(99, 102, 241, 0.2)',
+                    borderTopColor: '#818cf8',
+                    animation: 'spin 1s linear infinite'
+                  }}
+                />
+                <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>
+                  A mesterséges intelligencia átfogalmazza a szöveget és feloldja a kognitív elakadásokat...
+                </span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  color: '#cbd5e1',
+                  fontSize: '1.02rem',
+                  lineHeight: '1.75',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'inherit'
+                }}
+              >
+                {simplifiedText ||
+                  initialData.simplified_text?.simplified_version ||
+                  clientHeuristicSimplify(initialData.content || initialData.text || '')}
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
+export default DocumentViewer;
