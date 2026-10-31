@@ -12,3 +12,5 @@ dist/
 *.db
 uploads/*
 !uploads/.gitkeep
+package-lock.json
+frontend/package-lock.json

@@ -343,13 +343,11 @@ async def analyze_document(
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     content = ""
-    filename = "document.txt"
 
     if current_user:
         doc = db.query(Document).filter(Document.id == document_id, Document.user_id == current_user.id).first()
         if doc:
             content = _read_document_content(doc.storage_path, doc.filename)
-            filename = doc.filename
 
     # Kognitív elemzés futtatása
     try:
