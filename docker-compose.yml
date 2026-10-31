@@ -4,6 +4,7 @@ services:
     container_name: neuroread-db
     restart: always
     environment:
+        //env-bol
       POSTGRES_USER: neuro_user
       POSTGRES_PASSWORD: neuro_password
       POSTGRES_DB: neuroread
@@ -31,8 +32,8 @@ services:
 
   frontend:
     build:
-      context: ./src/frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/frontend/Dockerfile
     container_name: neuroread-frontend
     ports:
       - "80:80"
