@@ -2,7 +2,15 @@
 
 > **Kognitív Szövegelemző és 3D Agyi Információáramlást Vizualizáló Platform**  
  
- A NeuroRead egy kognitív szövegelemző és oktatástámogató platform, amelynek célja a komplex, szakmai szövegek megértésének elősegítése. A rendszer többnyelvű (magyar, román, angol) természetes nyelvfeldolgozási (NLP) és mesterséges intelligencia (Ollama / Llama 3) algoritmusok segítségével elemzi a szövegek nehézségét, kognitív terhelését és szintaxisát, ábrázolja az agyi terhelést valamint ad egy javaslatot a szöveg leegyszerűsítésére.
+ A tanulás effektivitása szempontjából kulcsfontosságú elem az idő. Nem mindegy, hogy mikor mit tanulunk, hiszen a nehezebb szövegekhez frissebb elme szükséges, míg a könnyebb szövegeket fáradtabban is meg tudjuk tanulni.
+ A NeuroRead egy kognitív szövegelemző és oktatástámogató platform, amelynek célja a komplex, szakmai szövegek megértésének elősegítése a nehezebb szavak kijelölésével, a kognitív terhelés ábrázolásával. A rendszer többnyelvű (magyar, román, angol) természetes nyelvfeldolgozási (NLP) és mesterséges intelligencia (Ollama / Llama 3) algoritmusok segítségével elemzi a szövegek nehézségét, kognitív terhelését és szintaxisát, ábrázolja az agyi terhelést valamint ad egy javaslatot a szöveg leegyszerűsítésére.
+
+ Célkitűzések
+    - felhasználó segítése abban, hogy felmérje a tananyag nehézségét
+    - kognitív terhelés ábrázolása
+    - valós idejű 3D teljesítmény
+    - nehezebb szövegrészek egyszerűsítése
+    - a fontosabb kifejezések kijelölése nehézség szerint
 
 Use-case diagramm
 ```mermaid
@@ -27,6 +35,29 @@ graph LR
     UC3 <-->|WebGL / R3F renderelés| GPU_Sys
     UC4 <-->|NLP átfogalmazás| AI_Sys
 ```
+#Irodalomkutatás és Szakirodalmi Áttekintés (Literature Review)
+
+    Alapvető definíciók és kognitív tudományos háttér
+A NeuroRead platform tervezése két fő tudományterület — a kognitív pszichológia és a számításos nyelvészet (NLP) — metszéspontjában helyezkedik el. A rendszer elméleti alapját John Sweller Kognitív Terhelés Elmélete (Cognitive Load Theory, CLT) adja. A definíció szerint a kognitív terhelés az emberi munkamemória (working memory) által egy adott pillanatban feldolgozott információ mennyiségét jelenti. Összetett, többszörösen alárendelt mondatszerkezetek vagy ritka szakkifejezések olvasásakor az úgynevezett járulékos kognitív terhelés (extraneous cognitive load) megnövekszik, ami rontja a szövegértés hatékonyságát.
+
+Neurolingvisztikai szempontból az olvasás és a szövegfeldolgozás több agyterület összehangolt működését igényli, amelyet a Dual-Stream (kettős feldolgozási) modell ír le. Míg az elsődleges látókéreg (Visual Cortex) a vizuális karakterek felismeréséért felel, addig a Wernicke-terület a szemantikai dekódolást (a szavak jelentésének megértését), a Broca-terület a szintaktikai struktúrák elemzését, a prefrontális kéreg (Prefrontal Cortex) pedig a munkamemória fenntartását és a komplex összefüggések integrálását végzi. A NeuroRead 3D szinaptikus vizualizációja ezen neurobiológiai folyamatok absztrakt leképezésére épül.
+
+    Meglévő megoldások és azok korlátai
+A szövegértést segítő és nyelvi elemző szoftverek piacán jelenleg számos eszköz érhető el, azonban ezek mindegyike jelentős korlátokkal rendelkezik a NeuroRead célkitűzéseihez képest:
+
+- Klasszikus olvashatósági mutatók (pl. Flesch-Kincaid, Gunning Fog Index): Ezek az algoritmusok kizárólag felszíni statisztikai jellemzőkre (szótagszám, mondathossz) támaszkodnak. Korlátjuk, hogy nem képesek felismerni a mélyebb szemantikai összefüggéseket vagy a kontextusfüggő fogalmi nehézségeket.
+
+- Felhőalapú generatív AI asszisztensek (pl. ChatGPT, Claude): Bár a nagy nyelvi modellek (LLM) kiválóan alkalmasak szövegek egyszerűsítésére és összefoglalására, használatuk komoly adatvédelmi kockázatot jelent. A bizalmas tudományos, jogi vagy vállalati dokumentumok külső, harmadik fél által üzemeltetett szerverekre történő feltöltése gyakran sérti az adatbiztonsági előírásokat.
+
+- Statikus kiemelő és jegyzetelő eszközök: A hagyományos olvasótámogató szoftverek nem rendelkeznek dinamikus, valós idejű vizualizációs visszacsatolással, így nem segítik a felhasználót abban, hogy vizuálisan is átlássa a szöveg által kiváltott kognitív terhelés eloszlását.
+
+A NeuroRead ezen korlátok kiküszöbölésére lokálisan futtatott nyílt forráskódú nyelvi modellt (Ollama / Llama 3) kombinál determinisztikus NLP elemzéssel (SpaCy) és valós idejű WebGL 3D vizualizációval, így egyszerre biztosít mély szemantikai elemzést, interaktív visszajelzést és teljes körű adatvédelmet.
+
+    Hivatkozások 
+Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. Cognitive Science, 12(2), 257–285. 
+Hickok, G., & Poeppel, D. (2007). The cortical organization of speech processing. Nature Reviews Neuroscience, 8(5), 393–402.
+Kincaid, J. P., Fishburne Jr, R. P., Rogers, R. L., & Chissom, B. S. (1975). Derivation of new readability formulas (Automated Readability Index, Fog Count and Flesch Reading Ease Formula) for Navy enlisted personnel. Research Branch Report 8-75, Millington, TN: Naval Technical Training, U.S. Naval Air Station.
+
 
 A NeuroRead platform nem-funkcionális követelményei három fő kategóriára oszlanak: termékkövetelményekre, szervezeti követelményekre és külső követelményekre.
 
@@ -61,7 +92,7 @@ A külső követelmények a biztonságra, az adatvédelemre és a kompatibilitá
   - A szerver semmilyen feltöltött dokumentumot nem tárol véglegesen. A feldolgozás után a fájlok csak ideiglenesen maradnak a memóriában/átmeneti tárolóban, majd egy automatikus törlési mechanizmus (Data Retention Cleanup) néhány napon belül véglegesen megsemmisíti őket.
   - Emellett a webes alkalmazás szabványos REST API kommunikációt használ, és teljes körű kompatibilitást biztosít a modern WebGL-képes böngészőkkel, mint a Google Chrome, Mozilla Firefox, Microsoft Edge és Safari.
 
-UML diagrammok
+#UML diagrammok
 
 ## 1. Komponens Diagram (Component Diagram)
 
@@ -345,47 +376,11 @@ sequenceDiagram
         deactivate BrainUI
     end
 ```
+Funkcionalitás + Adatáramlás + Architektúra
 
-
-
-
-
-
-
-mikor mi tortenik funkcionalitas 
-architekturan az ember, frontend, internet , ollama, adatbazis , backend, mi van a felhoben mi a backendben - 
-
-
-ui leirasa az adatflow szempontbol - pdfet feltoltik, onnan hova megy mi lesz belemenni hogy mit miert valasztottunk pl miert Reactet 
-
-backend - reszletezni a requesteket es respondokat 
-ket harom API-t kivalasztani es azokra bemutatni a request rspons pl amikor jon az agy bemeno parameterek , peldat adni vagy abrat rajzolni hogy mi jon be, es hogyan jon ki az API -bol (dobozkak nyilakkal)
-
-adatmodellekrol beszelni  + adatbazis + mi az adatmodell ORM
-adatbazis diagramm tablak + keyek / entitas diagramm  user osszekotve a historyval
-
-teszteles mit hoszan teszteltuk 
-
-helm chart - 
-
-
-
-
-
-
-
-
-.
-
-
-
-
-## 3. Rendszerarchitektúra és Adatfolyam
-
-A NeuroRead egy modern, szétválasztott (decoupled) háromrétegű kliens-szerver architektúrát alkalmaz:
-
-```mermaid
 flowchart TB
+    User(("👤 Felhasználó"))
+
     subgraph Frontend["Frontend Réteg (React 19 + Three.js / R3F + Vite)"]
         UI["Cyber-Cognitive UI (App.jsx)"]
         Viewer["DocumentViewer & TextHighlighter"]
@@ -414,214 +409,75 @@ flowchart TB
         Storage[("Helyi / Konténer Fájltároló (uploads/)")]
     end
 
+    %% Felhasználói Interakciók
+    User -->|1. Fájlt feltölt / Navigál| Sidebar
+    User -->|2. Bejelentkezik / Vezérli| UI
+    User -->|3. Olvassa a szöveget| Viewer
+    User -.->|4. Látja a 3D vizualizációt| Brain
+
+    %% Belső Frontend kapcsolatok
     UI --> AuthCtx
     Viewer --> Brain
     Sidebar --> UI
+
+    %% Frontend-Backend Adatáramlás
     AuthCtx --> API
     API --> RouterAuth
     API --> RouterDocs
+
+    %% Backend logika és Adatbázis
     RouterDocs --> Parsers
     RouterDocs --> ME
     RouterDocs --> ORM
     RouterAuth --> ORM
     ORM --> DB
     Parsers --> Storage
+
+    %% AI feldolgozás
     ME --> NLP
     ME --> LLM
     LLM -.->|Offline esetén| Fallback
-```
+
+@router.post("/documents/upload", status_code=status.HTTP_201_CREATED, response_model=DocumentResponse)
+async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_optional_current_user)):
+
+	- ez egy POST kéréseket fogadó végpont az "/upload" útvonalon
+	- ha a kérés sikeresen lefut, akkor automatikusan egy 201 CREATED státuszkóddal válaszol a szerver
+	- file: egy beérkező fájlt kér, ami nélkül a felhasználó nem tudna semmit se feltölteni
+	- db: szükség van az adatbázis kapcsolatra ahhoz, hogy a feltöltött dokumentum metaadatait el tudjuk menteni
+	- current_user: az aktuálisan bejelentkezett felhasználó objektuma, vagy ha nincs bejelentkezve, akkor None, innen tudjuk meg azt, hogy hozzá kell-e kötni a dokumentumot egy felhasználói fiókhoz az adatbázisban, vagy vendégként fogjuk kezelni
+	- ellenőrizzük, hogy a feltöltött fájlnak van-e neve, ha nincs, akkor 400 BAD REQUEST hibával fog visszatérni
+	- eltároljuk a fájl kiterjesztését, majd megvizsgáljuk, hogy ez támogatott formátumú-e vagy sem, ha nem támogatott, akkor 400 BAD REQUEST hibát ad
+	- generálunk egy biztonságos fájlnevet: a szóközöket lecseréljük, az elejéhez hozzáfűzzük a felhasználó id-ját vagy a "guest" szót, majd a fájlt lementjük
+	- a szövegkinyeréshez meghívjuk a _read_document_content függvényen keresztül a ParserFactory függvényt, amely a fájl kiterjesztésének megfelelően olvassa be a fájlt
+	- a kimentett szöveget átadjuk a _build_cognitive_model segédfüggvénynek, amely előállítja a kognitív modellt a szöveg komplexitása alapján
+	- a kimentett szöveg alapján kigenerájuk a request_simplification függvény segítségével a szöveg egyszerűsített magyar verzióját
+	- ha egy bejelentkezett felhasználó töltötte fel a dokumentumot, akkor a dokumentum adatait (dokumentum neve, kiterjesztése, mérete, elérési helye és a felhasználó egyedi azonosítója) feltöltjük az adatbázisba a megfelelő felhasználóhoz
+	- a függvény a DocumentResponse pydantic objektumot adja vissza, amelyben megtalálható a dokumentum egyedi azonosítója, az eredeti fájlnév, a fájl mérete kilobájtban, a fájl kiterjesztése, a fájlból kinyert teljes szöveg, a generált kognitív elemzési adatok, illetve a generált egyszerűsített szöveg és kulcsszavak
+
+
+
+@router.post("/documents/{document_id}/analyze")
+async def analyze_document(document_id: str, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_optional_current_user)):
+
+	- ez egy POST kéréseket fogadó végpont a "/{document_id}/analyze" útvonalon
+	- document_id: szükségünk van a dokumentum egyéni azonosítójára, hogy meg tudjuk keresni az adatbázisban
+	- db: szükség van az adatbázis kapcsolatra ahhoz, hogy a megvizsgált dokumentum metaadatait el tudjuk menteni
+	- current_user: az aktuálisan bejelentkezett felhasználó objektuma, vagy ha senki nincs bejelentkezve akkor None, innen tudjuk meg azt, hogy hozzá kell-e kötni a dokumentumot egy felhasználói fiókhoz az adatbázisban
+	- lekérjük a megfelelő dokumentumot, amiből a _read_document_content függvényen keresztül elért ParserFactory függvény segítségével kinyerjük a szöveget a kiterjesztésnek megfelelően
+	- a kinyert szöveget átadjuk a run_full_analysis függvénynek, amely lefuttatja a kognitív elemzést (nehéz, kiemelendő szavak meghatározása), ezeket az adatokat pedig egy cogitive_model változóba mentjük ki, ha az elemzés valami okból kifolyólag nem futtatható, meghívjuk a _build_cognitive_model segédfüggvényt, amely előállítja a kognitív modellt
+	- következőnek előállítjuk az egyszerűsített szöveget a request_simpliication függvény segítségével
+	- a függvény visszatéríti a dokumentum egyedi azonosítóját, a kognitív modellt, illetve az egyszerűsített szöveget
+
 
 ### Adatfeldolgozási folyamat (Upload -> Analysis -> 3D Render):
 1. **Fájlfeltöltés:** A felhasználó feltölt egy fájlt (`POST /api/documents/upload`).
 2. **Szövegkinyerés:** A `ParserFactory` azonosítja a MIME-típust, és delegálja a feladatot a megfelelő parsernek (`PDFParser`, `DocxParser`, `TxtParser`).
 3. **Kognitív Szintézis:** A `MainEngine` párhuzamosan elindítja a `SpaCy` szintaktikai ellenőrzést és az `LLM` szemantikai vizsgálatát.
 4. **Neurális Modell Generálás:** A backend összeállítja a mondatonkénti kognitív skálát és a `CognitiveModel` agyi szinapszishálózatát.
-5. **3D Vizualizáció:** A frontend fogadja az adatokat; a `DocumentViewer` kiemeli a nehéz mondatokat, a `Brain3DViewer` pedig elindítja a részecskék áramlását a kognitív pályákon.
+5. **3D Vizualizáció:** A frontend fogadja az adatokat; a `DocumentViewer` kiemeli a nehéz mondatokat, a `Brain3DViewer` pedig elindítja a részecskék áramlását a kognitív pályákon
 
----
+Összefoglaló fejezet
 
-## 4. Részletes Modulbemutatás
-
-### 4.1. Mesterséges Intelligencia és Kognitív Motor (`src/ai_engine`)
-
-A modul felelős a szöveg mély strukturális és gondolati elemzéséért.
-
-- **`nlp_processor.py` (TextProcessor):**
-  - Többnyelvű SpaCy támogatás: magyar (`hu_core_news_lg`), román (`ro_core_news_lg`), angol (`en_core_web_sm`).
-  - Nyelvfelismerés és lusta betöltés (lazy loading): a nagy modellek csak igény esetén töltődnek be a memóriába.
-  - Szintaktikai mélységmérés: a függőségi fák (dependency trees) mélységéből számítja ki a feldolgozási nehézséget.
-  - Olvashatósági statisztikák (`analyze_stats`): szó- és mondatszám, lexikális diverzitás (TTR – Type-Token Ratio), átlagos mondathossz.
-- **`llm_analyzer.py` (LLMAnalyzer):**
-  - Helyi mesterséges intelligencia (Ollama, modell: `llama3:8b` vagy tetszőleges helyi modell) integrációja az **Instructor** könyvtárral.
-  - Kinyeri a munkamemória-terhelést (`working_memory_load`: 0.0 - 1.0) és az absztrakt komplexitást (`semantic_complexity_score`: 1 - 10).
-  - Robusztus hibatűrés: ha a helyi LLM szerver nem fut vagy időtúllépés történik (4 másodperc), azonnal észrevétlenül átvált egy heurisztikus nyelvi elemzőre, így a rendszer sosem áll le.
-- **`main_engine.py` (MainEngine):**
-  - Összefűzi az NLP szegmenseket és az LLM jelöléseket.
-  - Generálja az agyi aktivációkat (`BrainActivation`) és szinaptikus pályákat (`SynapseFlow`).
-
----
-
-### 4.2. Backend REST Szolgáltatások (`src/backend`)
-
-A backend egy aszinkron **FastAPI** webes keretrendszer, amely tiszta, skálázható architektúrát biztosít.
-
-- **`parsers/` Csomag (Strategy Pattern):**
-  - `base.py`: Absztrakt `BaseParser` interfész `parse(file_path)` metódussal.
-  - `pdf_parser.py`: PyMuPDF / pdfplumber alapú szöveg- és metaadat-kivonatolás.
-  - `docx_parser.py`: `python-docx` alapú bekezdés- és táblázatfeldolgozás.
-  - `txt_parser.py`: Többkódolású (UTF-8, ISO-8859-2, Windows-1250) robusztus szövegolvasó.
-  - `factory.py`: MIME-típus és kiterjesztés alapján automatikus parser-kiosztás.
-- **`core/security.py` & `routers/auth.py`:**
-  - Jelszóhashelés `passlib` és `bcrypt` segítségével.
-  - Aszimmetrikus / szimmetrikus JWT token generálás lejárati idővel (OAuth2 Bearer).
-  - `get_optional_current_user`: Támogatja a regisztráció nélküli azonnali tesztelést (Guest Mode), miközben a bejelentkezett felhasználók fájljait privátként perzisztálja.
-- **`database/connection.py`:**
-  - PostgreSQL adatbázis-kapcsolat éles üzemben.
-  - Automatikus fallback **SQLite** helyi adatbázisra (`neuroread.db`), ha a PostgreSQL szerver nem elérhető.
-
----
-
-### 4.3. Modern Cyber-Cognitive Frontend (`src/frontend`)
-
-A felhasználói felület **React 19** és **Vite** alapú:
-- **`App.jsx`:** Központi vezérlőállomás navigációs sávval, interaktív bemutató résszel, munkamenet-kezeléssel és állapotszinkronizációval.
-- **`DocumentViewer.jsx` & `TextHighlighter.jsx`:**
-  - Kétpaneles elrendezés: a bal oldalon a vizsgált dokumentum, jobb oldalon a valós idejű 3D agymodell.
-  - Mondatszintű kiemelések: interaktív kapszulák (pill marks), amelyekre kattintva az agymodell az adott mondat kognitív állapotára vált.
-  - Metrikus sáv: szószám, becsült olvasási idő, átlagos kognitív pontszám és színskála-magyarázat.
-- **`FileUpload.jsx`:** Drag-and-drop digitális szkenner stílusú feltöltőzóna, amely tartalmaz egy **beépített kognitív demószöveg-betöltőt** is, így a rendszer azonnal kipróbálható fájlfeltöltés nélkül is.
-- **`DocumentSidebar.jsx`:** Keresővel és típusikonokkal ellátott oldalsáv az elemzett dokumentumok közötti gyors váltáshoz.
-- **`AuthModal.jsx`:** Glassmorphic előugró ablak bejelentkezéshez és regisztrációhoz.
-
----
-
-### 4.4. 3D Interaktív Agy és Információáramlás (`Brain3DViewer`)
-
-A rendszer leglátványosabb és legfontosabb komponense a `Brain3DViewer.jsx`, amely **Three.js** és **React Three Fiber (R3F)** technológiát használ.
-
-#### A 3D Modell Felépítése:
-1. **Procedurális Agykéreg (Hemispheres):**
-   - Két diszkrét félteke parametrikus elhelyezéssel.
-   - Szinuszos és koszinuszos perturbációs háló, amely a valódi agykéreg barázdáit (sulci) és tekervényeit (gyri) mintázza.
-   - Különálló kisagy (Cerebellum) és agytörzs (Brainstem) geometria.
-2. **Neurális Pontfelhő (Point Cloud):**
-   - 900 lebegő szinaptikus pont, amelyek lélegző animációval pulzálnak.
-3. **Kognitív Központok (Funkcionális Hubok):**
-   - **Vizuális kéreg (Visual Cortex):** Hátul, a tarkólebenyben (`z: -2.3`). A szöveg beérkezési kapuja.
-   - **Wernicke-terület:** Bal halántéklebeny (`x: -1.7, y: 0.1, z: 0.2`). Szemantikai értelmezés és fogalmi dekódolás.
-   - **Broca-terület:** Bal homloklebeny (`x: -1.4, y: 0.7, z: 1.2`). Nyelvtani és szintaktikai feldolgozás.
-   - **Prefrontális kéreg (Prefrontal Cortex):** Elöl, a homloklebeny csúcsán (`z: 2.3`). Munkamemória, döntéshozatal, komplex asszociáció.
-
-#### Információáramlás Szimuláció (Information Flow Dynamics):
-Az információ nem statikus vonalakon, hanem **harmadfokú Bézier-görbéken (Cubic Bézier Curves)** áramló részecskék formájában terjed a funkcionális központok között:
-
-```
-[Visual Cortex] ---> [Wernicke-terület] ---> [Broca-terület] ---> [Prefrontal Cortex]
-                             ^                                           |
-                             |----------- (Feedback Loop) ---------------|
-```
-
-- **Könnyű Szöveg Mód (Easy / Lamináris Áramlás):**
-  - **Színek:** Smaragdzöld és ciánkék (`#10b981`, `#06b6d4`).
-  - **Dinamika:** Nyugodt, egyenletes, lineáris sebesség, alacsony részecskeszórás.
-  - **Jelentése:** A szöveg könnyen értelmezhető, a munkamemória nincs leterhelve, nincsenek visszakérdezési hurkok.
-- **Nehéz Szöveg Mód (Hard / Turbulens Áramlás):**
-  - **Színek:** Pulzáló borostyánsárga, narancs és élénk kognitív vörös (`#f59e0b`, `#ef4444`).
-  - **Dinamika:** Nagy sebességű részecskék, megnövelt szórás, pulzáló intenzitású magok.
-  - **Feedback Loop (Visszacsatolás):** Aktív hibajavító és újrakódoló áramlás a Prefrontális kéregből vissza a Wernicke-területre, jelezve, hogy az agy kénytelen újraértelmezni a nehéz mondatrészeket.
-- **Irányító HUD Panel:**
-  - A felhasználó manuálisan is kapcsolhat a módok között (Automata / Könnyű / Nehéz), és leolvashatja a pillanatnyi agyi aktivitási frekvenciát és az aktív szinapszisok számát.
-
----
-
-## 5. Tudományos Háttér: Kognitív Terhelés és Neurális Dinamika
-
-A NeuroRead kognitív modellje **John Sweller Kognitív Terhelés Elméletére (Cognitive Load Theory - CLT)** és a modern pszicholingvisztika eredményeire támaszkodik:
-
-1. **Belső Kognitív Terhelés (Intrinsic Load):**
-   - A tananyag, illetve a szöveg témájának inherens nehézsége (fogalmi sűrűség, absztrakció).
-   - Ezt a NeuroReadben az LLM szemantikai komplexitás pontszáma (`semantic_complexity_score`: 1–10) méri.
-2. **Járulékos Kognitív Terhelés (Extraneous Load):**
-   - A rosszul felépített mondatszerkezet, a feleslegesen bonyolult grammatika, a passzív szerkezetek és a túlzott függőségi fanagyság által okozott terhelés.
-   - Ezt a SpaCy szintaktikai fa mélysége és a mondathossz alapján számítjuk ki.
-3. **Értelmező Kognitív Terhelés (Germane Load):**
-   - Az új információk meglévő tudássémákba való beépítése.
-   - Az agymodellben ez a Wernicke-terület és a Prefrontális kéreg közötti szinaptikus aktivitásként jelenik meg.
-
-### Alkalmazott Kognitív és Olvashatósági Mutatók:
-- **Szintaktikai Komplexitási Index:** A SpaCy mondatelemző fa maximális mélysége és az alárendelt tagmondatok aránya.
-- **Lexikális Nehézség (Lexical Density):** Ritka szavak aránya a szótári gyakorisági listákhoz képest.
-- **Flesch Reading Ease & Flesch-Kincaid Grade Level:** Szótagszám és mondathossz alapú klasszikus skálák.
-
----
-
-## 6. API Végpontok és Kommunikációs Szerződések
-
-A FastAPI backend az alábbi strukturált REST végpontokat biztosítja:
-
-### 6.1. Hitelesítés (`/api/auth`)
-- `POST /api/auth/register`
-  - Bemenet: `UserCreate` (`email`, `username`, `password`)
-  - Kimenet: `UserResponse` (`id`, `email`, `username`, `created_at`)
-- `POST /api/auth/login`
-  - Bemenet: `OAuth2PasswordRequestForm` (`username`, `password`)
-  - Kimenet: `Token` (`access_token`, `token_type: bearer`)
-- `GET /api/auth/me`
-  - Fejléc: `Authorization: Bearer <token>`
-  - Kimenet: Az aktuális bejelentkezett felhasználó adatai.
-
-### 6.2. Dokumentumkezelés és Elemzés (`/api/documents`)
-- `POST /api/documents/upload`
-  - Bemenet: `multipart/form-data` (`file: UploadFile`)
-  - Működés: Fájl mentése, parser kiválasztása, szövegkinyerés, kognitív analízis lefutása.
-  - Kimenet: `DocumentUploadResponse` (feldolgozott szöveg, statisztikák, kognitív kiemelések, `cognitive_model`).
-- `GET /api/documents/`
-  - Kimenet: A felhasználó (vagy vendég) korábban feltöltött dokumentumainak listája.
-- `GET /api/documents/{document_id}`
-  - Kimenet: Egy adott dokumentum részletes adatai, korábbi elemzési eredményei.
-- `DELETE /api/documents/{document_id}`
-  - Kimenet: Sikeres törlés visszajelzése.
-- `POST /api/documents/{document_id}/analyze`
-  - Működés: Létező dokumentum ismételt elemzése frissített paraméterekkel.
-
-### 6.3. Közvetlen Kognitív MI Végpontok (`/api/ai`)
-- `POST /api/ai/analyze-text`
-  - Bemenet: Nyers szöveg és nyelv megjelölése (`hu`, `en`, `ro`).
-  - Kimenet: Mondatonkénti kognitív súlyozás és kiemelési tartományok.
-- `POST /api/ai/cognitive-model`
-  - Kimenet: A 3D agyhoz szükséges szinapszispontok és aktivációs vektorok.
-
----
-
-## 7. Telepítési, Konfigurációs és Futtatási Útmutató
-
-A NeuroRead futtatható lokális fejlesztői környezetben vagy Docker konténerekben.
-
-### 7.1. Rendszerkövetelmények
-- **Operációs Rendszer:** Windows 10/11, macOS, vagy Ubuntu 20.04+
-- **Python:** 3.10, 3.11 vagy 3.13
-- **Node.js:** v18.0.0 vagy újabb (npm v9+)
-- **Docker & Docker Compose:** (Opcionális, konténeres futtatáshoz)
-- **Ollama:** (Opcionális, helyi Llama3 LLM gyorsításhoz)
-
----
-
-### 7.2. Helyi Fejlesztői Környezet Beállítása (Local Setup)
-
-#### 1. Lépés: Repository klónozása
-```bash
-git clone https://github.com/PitoPanna/NeuroRead.git
-cd NeuroRead
-```
-
-#### 2. Lépés: Python virtuális környezet és függőségek
-```bash
-# Virtuális környezet létrehozása és aktiválása (Windows PowerShell)
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-
-
-*Dokumentáció lezárva: 2026. október 20.*  
-
-
+A NeuroRead projekt fejlesztése során sikeresen megvalósult egy modern webes szövegelemző platform, amely a mesterséges intelligencia és a 3D-s adatvizualizáció ötvözésével segíti a komplexebb szövegek megértését, segít a tanulás beosztásában a kognitív terhelés ábrázolásával. 
+A fejlesztés során a kitűzött célok hiánytalanul teljesültek: a természetes nyelvfeldolgozó modul és a lokális nyelvi modell(Ollama / Llama 3) segítségével megvalósult a szövegek szintaktikai elemzése, a fontos kifejezések kiemelése és gombnyomásra a szöveg egyszerűsítése, míg a frontend oldalon egy React Three Fiber alapú, 60 FPS sebességgel futó interaktív 3D agymodell jeleníti meg az agyterületek közötti szinaptikus információáramlást.
